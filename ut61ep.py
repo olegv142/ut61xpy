@@ -1,5 +1,5 @@
 """
-The UNI-T UT61E+ HID communication helper.
+The UNI-T UT61E+ digital multi-meter communication helper.
 Its inspired by:
  https://github.com/aroum/unit_ut61eplus_python
  https://github.com/ljakob/unit_ut61eplus
@@ -15,6 +15,7 @@ import logging
 log = logging.getLogger('DEV')
 
 def dev_open_path(path):
+	"""Open device given the path"""
 	device = hid.device()
 	try:
 		device.open_path(path)
@@ -25,6 +26,7 @@ def dev_open_path(path):
 	return device
 
 def dev_open(vid=0x1a86, pid=0xe429):
+	"""Open device given its VID, PID"""
 	devs = hid.enumerate(vid, pid)
 	if not devs:
 		log.error('not found')
@@ -35,6 +37,7 @@ def dev_open(vid=0x1a86, pid=0xe429):
 	return dev_open_path(devs[0]['path'])
 
 def dev_query_raw(dev):
+	"""Read and validate raw data packet"""
 	attempts = 10
 	CMD = [0xAB, 0xCD, 0x03, 0x5E, 0x01, 0xD9]
 	dev.write([0, len(CMD)] + CMD)
@@ -58,11 +61,28 @@ def dev_query_raw(dev):
 	return data[:-2]
 
 def get_value(data):
+	"""
+	Convert raw data to the floating point value. Here we don't
+	care about units since the caller should be aware of them.
+	It set mode dial manually after all. So in the mV mode the
+	result is expressed in mV rather than volts.
+	"""
 	try:
 		val = float(''.join([chr(d) for d in data[5:12]]))
 	except ValueError:
 		return float('nan')
+	# Apply range multiplier
 	mode, range = data[3], data[4] - ord('0')
+	# There are 3 positions of the decimal place on display.
+	# Every time the range value is incremented the decimal place
+	# either moves to the right or jumps back to the leftmost
+	# position. When its moving to the right we don't need to
+	# change multiplier. When it jumps to the left we have to
+	# increase multiplier by 3 orders of magnitude.
+	# The following map keeps the initial position of the decimal
+	# point corresponding to the range 0.
+	# Its indexed by the mode. If the mode is not in the map
+	# then we don't care about range multiplier at all.
 	range_offset = {
 		6 : 2, # Ohms
 		9 : 1, # nF
