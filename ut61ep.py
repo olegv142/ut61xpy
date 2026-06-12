@@ -1,8 +1,28 @@
+"""
+The UNI-T UT61E+ HID communication helper.
+Its inspired by:
+ https://github.com/aroum/unit_ut61eplus_python
+ https://github.com/ljakob/unit_ut61eplus
+The code was reworked with the following goals in mind:
+ - keep code as simple as possible
+ - seamless working on Windows and Linux
+"""
+
 import hid
 import time
 import logging
 
 log = logging.getLogger('DEV')
+
+def dev_open_path(path):
+	device = hid.device()
+	try:
+		device.open_path(path)
+	except:
+		log.error('failed to open device ' + path)
+		return None
+	device.set_nonblocking(True)
+	return device
 
 def dev_open(vid=0x1a86, pid=0xe429):
 	devs = hid.enumerate(vid, pid)
@@ -12,14 +32,7 @@ def dev_open(vid=0x1a86, pid=0xe429):
 	if len(devs) > 1:
 		log.error('%d devices found' % len(devs))
 		return None
-	device = hid.device()
-	try:
-		device.open_path(devs[0]['path'])
-	except:
-		log.error('failed to open device')
-		return None
-	device.set_nonblocking(True)
-	return device
+	return dev_open_path(devs[0]['path'])
 
 def dev_query_raw(dev):
 	attempts = 10
@@ -59,6 +72,7 @@ def get_value(data):
 	return val * 10 ** (3*((range + range_offset[mode]) // 3))
 
 if __name__ == '__main__':
+	# Open device and print raw readings as well as the corresponding floating point value
 	dev = dev_open()
 	if dev:
 		last_data = None
