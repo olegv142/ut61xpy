@@ -16,6 +16,7 @@ log = logging.getLogger('DEV')
 
 DEF_VID = 0x1a86
 DEF_PID = 0xe429
+DEF_TOUT = 2
 
 def dev_open_path(path):
 	"""Open device given the path"""
@@ -39,9 +40,9 @@ def dev_open(vid=DEF_VID, pid=DEF_PID):
 		return None
 	return dev_open_path(devs[0]['path'])
 
-def dev_query_raw(dev):
+def dev_query_raw(dev, tout=DEF_TOUT):
 	"""Read and validate raw data packet"""
-	attempts = 10
+	attempts = int(10 * tout)
 	CMD = [0xAB, 0xCD, 0x03, 0x5E, 0x01, 0xD9]
 	dev.write([0, len(CMD)] + CMD)
 	while True:
