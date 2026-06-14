@@ -38,7 +38,7 @@ def do_data(args):
         return -1
     out_file = sys.stdout if not args.out else open(args.out, 'w')
     total_samples = total_valid = 0
-    total_sum = total_sum2 = 0
+    total_sum = total_sum2 = total_sum3 = 0
     total_min = float('inf')
     total_max = -total_min
     if args.plot:
@@ -64,9 +64,11 @@ def do_data(args):
                 print('.' if val_good else '!', end='', flush=True)
             total_samples += 1
             if val_good:
+                # Update stat
                 total_valid += 1
                 total_sum   += val
                 total_sum2  += val * val
+                total_sum3  += val * val * val
                 total_min    = min(total_min, val)
                 total_max    = max(total_max, val)
             if args.plot and val_good:
@@ -124,16 +126,19 @@ def do_data(args):
             print('total samples : %d' % total_samples)                
             print('valid samples : %d' % total_valid)
             if total_valid:
-                aver = total_sum / total_valid
-                aver_2 = aver * aver
-                aver2 = total_sum2 / total_valid
-                sigma = math.sqrt(aver2 - aver_2) if aver2 > aver_2 else 0
+                aver, aver2 = total_sum / total_valid, total_sum2 / total_valid
+                aver_2  = aver * aver
+                sigma_2 = aver2 - aver_2
+                sigma   = math.sqrt(sigma_2) if sigma_2 > 0 else 0
+                m3      = total_sum3 / total_valid - aver * (aver_2 + 3 * sigma_2)
                 print('min  value    : %f' % total_min)
                 print('max  value    : %f' % total_max)
                 print('aver value    : %f' % aver)
                 print('std deviation : %f' % sigma)
                 if aver:
                     print('rel. dev. [%%] : %.2f' % (100 * sigma / abs(aver)))
+                if sigma:
+                    print('skewness  [%%] : %.2f' % (100 * m3 / (sigma ** 3)))
 
 def main():
     parser = argparse.ArgumentParser(
