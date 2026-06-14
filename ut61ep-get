@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+"""
+The UNI-T UT61E+ digital multi-meter data acquisition tool
+"""
+
 import hid
 import sys
 import math
