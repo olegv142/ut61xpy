@@ -2,8 +2,10 @@
 
 import hid
 import sys
+import math
 import time
 import argparse
+import matplotlib.pyplot as plt
 from ut61ep import *
 
 def do_list(args):
@@ -33,34 +35,76 @@ def do_data(args):
     if dev is None:
         return -1
     out_file = sys.stdout if not args.out else open(args.out, 'w')
+    if args.plot:
+        plt.ion()
+        x_data, y_data = [], []
+        fig, ax = plt.subplots()
+        line, = ax.plot(x_data, y_data)
+        padding = .075
     try:
         start = ts = time.time()
         while True:
+            # Query data
             data = dev_query_raw(dev)
             if not data:
                 log.error('no data')
                 return -1
-            print('%.3f%s %f' % (
-                    ts if args.epoch else ts - start, args.delimiter, get_value(data)
-                ), file=out_file)
+            t = ts - start
+            val = get_value(data)
+            val_good = not math.isnan(val)
+            print('%.3f%s %f' % (ts if args.epoch else t, args.delimiter, val), file=out_file)
             if args.out and args.progress:
-                print('.', end='', flush=True)
+                print('.' if val_good else '!', end='', flush=True)
+            if args.plot and val_good:
+                # Update plot
+                if not plt.fignum_exists(fig.number):
+                    break
+                x_data.append(t)
+                y_data.append(val)
+                if args.wnd and len(x_data) > args.wnd:
+                    x_data.pop(0)
+                    y_data.pop(0)
+                line.set_data(x_data, y_data)
+                xmin, xmax = x_data[0], x_data[-1]
+                if xmin == xmax:
+                    xmax += args.interval if args.interval else 1
+                ax.set_xlim(xmin, xmax)
+                ymin, ymax = min(y_data), max(y_data)
+                if ymin > 0 and args.with_zero:
+                    vmin = 0
+                    vmax = ymax * (1 + padding)
+                elif ymax < 0 and args.with_zero:
+                    vmax = 0
+                    vmin = ymin * (1 + padding)
+                else:
+                    vrange = ymax - ymin if ymax > ymin else abs(ymax) if ymax else 1
+                    vmin = ymin - vrange * padding
+                    vmax = ymax + vrange * padding
+                ax.set_ylim(vmin, vmax)
+                fig.canvas.flush_events()
+            # Introduce delay according to acquisition interval
             now = time.time()
             elapsed = now - ts
             if elapsed < args.interval:
-                time.sleep(args.interval - elapsed)
+                delay = args.interval - elapsed
+                if args.plot:
+                    plt.pause(delay)
+                else:
+                    time.sleep(delay)
                 ts += args.interval
             else:
                 ts = now
     except KeyboardInterrupt:
+        return 0
+    finally:
         if args.out:
             out_file.close()
-        return 0
 
 def main():
     parser = argparse.ArgumentParser(
             description='UNI-T UT61E+ data acquisition tool',
-            formatter_class=lambda prog: argparse.HelpFormatter(prog,max_help_position=36)
+            usage='%(prog)s [options] list|once|data',
+            formatter_class=lambda prog: argparse.HelpFormatter(prog, max_help_position=30)
         )
 
     def get_help(args):
@@ -69,22 +113,28 @@ def main():
 
     parser.set_defaults(func=get_help)
 
-    parser.add_argument('-p', '--path', type=str, required=False,
-            help='port path')
-    parser.add_argument('-V', '--VID', type=int, required=False, default=DEF_VID,
-            help='device vendor id')
-    parser.add_argument('-P', '--PID', type=int, required=False, default=DEF_PID,
-            help='device product id')
-    parser.add_argument('-i', '--interval', type=float, required=False, default=1.,
+    parser.add_argument('--path', type=str, required=False,
+            help='device path (optional, auto detect by default)')
+    parser.add_argument('--VID', type=int, required=False, default=DEF_VID,
+            help='device vendor id (optional)')
+    parser.add_argument('--PID', type=int, required=False, default=DEF_PID,
+            help='device product id (optional)')
+    parser.add_argument('-i', '--interval', type=float, required=False, default=1., metavar='SECONDS',
             help='data acquisition interval (default is 1 sec)')
-    parser.add_argument('-o', '--out', type=str, required=False,
-            help='output file name')
+    parser.add_argument('-o', '--out', type=str, required=False, metavar='FILENAME',
+            help='output file name (optional, output to stdout by default)')
     parser.add_argument('-e', '--epoch', action='store_true',
-            help='use epoch timestamps')
-    parser.add_argument('-d', '--delimiter', type=str, default='',
-            help='data delimiter on output')
+            help='use epoch timestamps (optional, use time since start by default)')
+    parser.add_argument('-d', '--delimiter', type=str, default='', metavar='SYMBOL',
+            help='data delimiter on output (optional, space by default)')
     parser.add_argument('--progress', action='store_true',
             help='show progress when writing to file')
+    parser.add_argument('-P', '--plot', action='store_true',
+            help='show data graph')
+    parser.add_argument('-z', '--with-zero', action='store_true',
+            help='make sure zero is within vertical axis range')
+    parser.add_argument('-W', '--wnd', type=int, required=False, metavar='SAMPLES',
+            help='data graph window samples (optional, show all samples by default)')
 
     subparsers = parser.add_subparsers()
     subparsers.add_parser('list',
