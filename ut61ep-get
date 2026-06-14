@@ -61,29 +61,32 @@ def do_data(args):
             if args.plot and val_good:
                 # Update plot
                 if not plt.fignum_exists(fig.number):
-                    break
+                    return 0
                 x_data.append(t)
                 y_data.append(val)
-                if args.wnd and len(x_data) > args.wnd:
+                pan_zoom = ax.get_navigate_mode() is not None
+                while args.wnd and not pan_zoom and len(x_data) > args.wnd:
                     x_data.pop(0)
                     y_data.pop(0)
                 line.set_data(x_data, y_data)
-                xmin, xmax = x_data[0], x_data[-1]
-                if xmin == xmax:
-                    xmax += args.interval if args.interval else 1
-                ax.set_xlim(xmin, xmax)
-                ymin, ymax = min(y_data), max(y_data)
-                if ymin > 0 and args.with_zero:
-                    vmin = 0
-                    vmax = ymax * (1 + padding)
-                elif ymax < 0 and args.with_zero:
-                    vmax = 0
-                    vmin = ymin * (1 + padding)
-                else:
-                    vrange = ymax - ymin if ymax > ymin else abs(ymax) if ymax else 1
-                    vmin = ymin - vrange * padding
-                    vmax = ymax + vrange * padding
-                ax.set_ylim(vmin, vmax)
+                if not pan_zoom:
+                    # Update limits
+                    xmin, xmax = x_data[0], x_data[-1]
+                    if xmin == xmax:
+                        xmax += args.interval if args.interval else 1
+                    ax.set_xlim(xmin, xmax)
+                    ymin, ymax = min(y_data), max(y_data)
+                    if ymin > 0 and args.with_zero:
+                        vmin = 0
+                        vmax = ymax * (1 + padding)
+                    elif ymax < 0 and args.with_zero:
+                        vmax = 0
+                        vmin = ymin * (1 + padding)
+                    else:
+                        vrange = ymax - ymin if ymax > ymin else abs(ymax) if ymax else 1
+                        vmin = ymin - vrange * padding
+                        vmax = ymax + vrange * padding
+                    ax.set_ylim(vmin, vmax)
                 fig.canvas.flush_events()
             # Introduce delay according to acquisition interval
             now = time.time()
