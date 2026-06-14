@@ -22,12 +22,15 @@ def do_once(args):
     dev = open_device(args)
     if dev is None:
         return -1
-    data = dev_query_raw(dev)
-    if not data:
-        log.error('no data')
-        return -1
-    print(get_value(data))
-    return 0
+    try:
+        data = dev_query_raw(dev)
+        if not data:
+            log.error('no data')
+            return -1
+        print(get_value(data))
+        return 0
+    finally:
+        dev.close()
 
 def do_data(args):
     dev = open_device(args)
@@ -97,6 +100,7 @@ def do_data(args):
     except KeyboardInterrupt:
         return 0
     finally:
+        dev.close()
         if args.out and args.progress:
             print()
         if args.out:
