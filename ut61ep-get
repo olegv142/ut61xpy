@@ -139,11 +139,11 @@ def main():
             help='data delimiter on output (optional, space by default)')
     parser.add_argument('--progress', action='store_true',
             help='show progress when writing to file')
-    parser.add_argument('-P', '--plot', action='store_true',
+    parser.add_argument('-p', '--plot', action='store_true',
             help='show data graph')
     parser.add_argument('-z', '--with-zero', action='store_true',
             help='make sure zero is within vertical axis range')
-    parser.add_argument('-W', '--wnd', type=int, required=False, metavar='SAMPLES',
+    parser.add_argument('-w', '--wnd', type=int, required=False, metavar='SAMPLES',
             help='data graph window samples (optional, show all samples by default)')
 
     subparsers = parser.add_subparsers()
