@@ -97,6 +97,7 @@ def do_data(args):
     except KeyboardInterrupt:
         return 0
     finally:
+        print()
         if args.out:
             out_file.close()
 
