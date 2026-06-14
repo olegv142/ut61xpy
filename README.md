@@ -6,4 +6,8 @@ Its inspired by https://github.com/aroum/unit_ut61eplus_python & https://github.
 The code was reworked with the following goals in mind:
  - keep code as simple as possible
  - ensure seamless working on Windows and Linux
- - create simple cli tool for data collection and visualization
+ - create simple cli tool (**ut61ep-get**) for data collection and visualization
+
+To use this code you will need hid package or hidapi on windows. Use pip to install it.
+
+To use graph plotting options of **ut61ep-get** data acquisition tool you will need matplotlib package. The tool may be executed without matplotlib package installed unless you use -P (show data graph) option.
