@@ -72,7 +72,8 @@ def get_value(data):
 	result is expressed in mV rather than volts.
 	"""
 	try:
-		val = float(''.join([chr(d) for d in data[5:12]]))
+		space = ord(' ')
+		val = float(''.join([chr(d) for d in data[5:12] if d != space]))
 	except ValueError:
 		return float('nan')
 	# Apply range multiplier
