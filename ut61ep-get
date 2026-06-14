@@ -100,8 +100,7 @@ def do_data(args):
                         vmin = ymin - vrange * padding
                         vmax = ymax + vrange * padding
                     ax.set_ylim(vmin, vmax)
-                fig.canvas.flush_events()
-                fig.canvas.flush_events()
+                plt.show()
             # Introduce delay according to acquisition interval
             now = time.time()
             elapsed = now - ts
