@@ -1,0 +1,104 @@
+#!/usr/bin/env python3
+
+import hid
+import sys
+import time
+import argparse
+from ut61ep import *
+
+def do_list(args):
+    for dev in hid.enumerate(args.VID, args.PID):
+        print(dev['path'].decode('ascii'))
+    return 0
+
+def open_device(args):
+    if args.path:
+        return dev_open_path(args.path.encode('ascii'))
+    else:
+        return dev_open(args.VID, args.PID)
+
+def do_once(args):
+    dev = open_device(args)
+    if dev is None:
+        return -1
+    data = dev_query_raw(dev)
+    if not data:
+        log.error('no data')
+        return -1
+    print(get_value(data))
+    return 0
+
+def do_data(args):
+    dev = open_device(args)
+    if dev is None:
+        return -1
+    out_file = sys.stdout if not args.out else open(args.out, 'w')
+    try:
+        start = ts = time.time()
+        while True:
+            data = dev_query_raw(dev)
+            if not data:
+                log.error('no data')
+                return -1
+            print('%.3f%s %f' % (
+                    ts if args.epoch else ts - start, args.delimiter, get_value(data)
+                ), file=out_file)
+            if args.out and args.progress:
+                print('.', end='', flush=True)
+            now = time.time()
+            elapsed = now - ts
+            if elapsed < args.interval:
+                time.sleep(args.interval - elapsed)
+                ts += args.interval
+            else:
+                ts = now
+    except KeyboardInterrupt:
+        if args.out:
+            out_file.close()
+        return 0
+
+def main():
+    parser = argparse.ArgumentParser(
+            description='UNI-T UT61E+ data acquisition tool',
+            formatter_class=lambda prog: argparse.HelpFormatter(prog,max_help_position=36)
+        )
+
+    def get_help(args):
+        parser.print_help()
+        return 1
+
+    parser.set_defaults(func=get_help)
+
+    parser.add_argument('-p', '--path', type=str, required=False,
+            help='port path')
+    parser.add_argument('-V', '--VID', type=int, required=False, default=DEF_VID,
+            help='device vendor id')
+    parser.add_argument('-P', '--PID', type=int, required=False, default=DEF_PID,
+            help='device product id')
+    parser.add_argument('-i', '--interval', type=float, required=False, default=1.,
+            help='data acquisition interval (default is 1 sec)')
+    parser.add_argument('-o', '--out', type=str, required=False,
+            help='output file name')
+    parser.add_argument('-e', '--epoch', action='store_true',
+            help='use epoch timestamps')
+    parser.add_argument('-d', '--delimiter', type=str, default='',
+            help='data delimiter on output')
+    parser.add_argument('--progress', action='store_true',
+            help='show progress when writing to file')
+
+    subparsers = parser.add_subparsers()
+    subparsers.add_parser('list',
+            help='list path for connected devices'
+        ).set_defaults(func=lambda args: do_list(args))
+    subparsers.add_parser('once',
+            help='get single reading'
+        ).set_defaults(func=lambda args: do_once(args))
+    subparsers.add_parser('data',
+            help='read data continuously'
+        ).set_defaults(func=lambda args: do_data(args))
+
+    args = parser.parse_args()
+    return args.func(args)
+
+if __name__ == '__main__':
+    sys.exit(main())

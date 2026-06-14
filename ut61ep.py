@@ -14,25 +14,28 @@ import logging
 
 log = logging.getLogger('DEV')
 
+DEF_VID = 0x1a86
+DEF_PID = 0xe429
+
 def dev_open_path(path):
 	"""Open device given the path"""
 	device = hid.device()
 	try:
 		device.open_path(path)
 	except:
-		log.error('failed to open device ' + path)
+		log.error('failed to open device %s', path)
 		return None
 	device.set_nonblocking(True)
 	return device
 
-def dev_open(vid=0x1a86, pid=0xe429):
+def dev_open(vid=DEF_VID, pid=DEF_PID):
 	"""Open device given its VID, PID"""
 	devs = hid.enumerate(vid, pid)
 	if not devs:
 		log.error('not found')
 		return None
 	if len(devs) > 1:
-		log.error('%d devices found' % len(devs))
+		log.error('%d devices found', len(devs))
 		return None
 	return dev_open_path(devs[0]['path'])
 
@@ -51,7 +54,7 @@ def dev_query_raw(dev):
 			return None
 	data_len = buf[0]
 	if data_len <= 2 or data_len > 63:
-		log.error('bad length: %d' % data_len)
+		log.error('bad length: %d', data_len)
 		return None
 	data = buf[1:1+data_len]
 	cs = data[-2] * 256 + data[-1]
