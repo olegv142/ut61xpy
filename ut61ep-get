@@ -110,6 +110,7 @@ def do_data(args):
                 if not pan_zoom:
                     ax_update_xlim(ax, args, x_data[0], x_data[-1])
                     ax_update_ylim(ax, args, *((min(y_data), max(y_data)) if args.wnd else (total_min, total_max)))
+            if args.graph:
                 fig.canvas.flush_events()
                 plt.show()
             # Introduce delay according to acquisition interval
