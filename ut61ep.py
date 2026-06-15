@@ -40,13 +40,13 @@ def dev_open(vid=DEF_VID, pid=DEF_PID):
         return None
     return dev_open_path(devs[0]['path'])
 
-def dev_query_raw(dev, tout=DEF_TOUT):
+def dev_query_raw(dev, tout=DEF_TOUT, idle_sleep=time.sleep):
     """Read and validate raw data packet"""
     attempts = int(10 * tout)
     CMD = [0xAB, 0xCD, 0x03, 0x5E, 0x01, 0xD9]
     dev.write([0, len(CMD)] + CMD)
     while True:
-        time.sleep(.1)
+        idle_sleep(.1)
         buf = dev.read(64)
         if buf:
             break

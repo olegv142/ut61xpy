@@ -72,11 +72,12 @@ def do_data(args):
         if args.title:
             fig.canvas.manager.set_window_title(args.title)
         line, = ax.plot(x_data, y_data)
+    sleep_fn = time.sleep if not args.graph else plt.pause
     try:
         start = ts = time.time()
         while True:
             # Query data
-            data = dev_query_raw(dev, args.tout)
+            data = dev_query_raw(dev, args.tout, sleep_fn)
             if not data:
                 log.error('no data')
                 return -1
@@ -117,11 +118,7 @@ def do_data(args):
             now = time.time()
             elapsed = now - ts
             if elapsed < args.interval:
-                delay = args.interval - elapsed
-                if args.graph:
-                    plt.pause(delay)
-                else:
-                    time.sleep(delay)
+                sleep_fn(args.interval - elapsed)
                 ts += args.interval
             else:
                 ts = now
