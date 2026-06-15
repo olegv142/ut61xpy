@@ -10,4 +10,6 @@ The code was reworked with the following goals in mind:
 
 To use this code you will need *hidapi* package. Use pip to install it.
 
-To use graph plotting options of **ut61ep-get** data acquisition tool you will need matplotlib package. The tool may be executed without matplotlib package installed unless you use -P (show data graph) option.
+To use graph plotting options of **ut61ep-get** data acquisition tool you will need *matplotlib* package. The tool may be executed without *matplotlib* package installed unless you use -g (show data graph) option. On Linux you will probably have to run **ut61ep-get** under the root to be able to read data from it.
+
+You can run several instances of **ut61ep-get** tool to read from several devices simultaneously. To be able to do it you you have to specify device path explicitly with **--path** option since device auto-discovery works with single connected device only. To get the list of connected devices one can use **ut61ep-get list** command. You can run **ut61ep-get** without parameters to get full information about its usage.
