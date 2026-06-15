@@ -94,7 +94,10 @@ def do_data(args):
                     if xmin == xmax:
                         xmax += args.interval if args.interval else 1
                     ax.set_xlim(xmin, xmax)
-                    ymin, ymax = min(y_data), max(y_data)
+                    if args.wnd:
+                        ymin, ymax = min(y_data), max(y_data)
+                    else:
+                        ymin, ymax = total_min, total_max
                     if ymin > 0 and args.with_zero:
                         vmin = 0
                         vmax = ymax * (1 + padding)
