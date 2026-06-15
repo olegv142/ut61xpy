@@ -36,6 +36,25 @@ def do_once(args):
     finally:
         dev.close()
 
+def ax_update_xlim(ax, args, xmin, xmax):
+    if xmin == xmax:
+        xmax += args.interval if args.interval else 1
+    ax.set_xlim(xmin, xmax)
+
+def ax_update_ylim(ax, args, ymin, ymax):
+    padding = .075
+    if ymin > 0 and args.with_zero:
+        vmin = 0
+        vmax = ymax * (1 + padding)
+    elif ymax < 0 and args.with_zero:
+        vmax = 0
+        vmin = ymin * (1 + padding)
+    else:
+        vrange = ymax - ymin if ymax > ymin else abs(ymax) if ymax else 1
+        vmin = ymin - vrange * padding
+        vmax = ymax + vrange * padding
+    ax.set_ylim(vmin, vmax)
+
 def do_data(args):
     dev = open_device(args)
     if dev is None:
@@ -53,7 +72,6 @@ def do_data(args):
         if args.title:
             fig.canvas.manager.set_window_title(args.title)
         line, = ax.plot(x_data, y_data)
-        padding = .075
     try:
         start = ts = time.time()
         while True:
@@ -89,26 +107,8 @@ def do_data(args):
                     y_data.pop(0)
                 line.set_data(x_data, y_data)
                 if not pan_zoom:
-                    # Update limits
-                    xmin, xmax = x_data[0], x_data[-1]
-                    if xmin == xmax:
-                        xmax += args.interval if args.interval else 1
-                    ax.set_xlim(xmin, xmax)
-                    if args.wnd:
-                        ymin, ymax = min(y_data), max(y_data)
-                    else:
-                        ymin, ymax = total_min, total_max
-                    if ymin > 0 and args.with_zero:
-                        vmin = 0
-                        vmax = ymax * (1 + padding)
-                    elif ymax < 0 and args.with_zero:
-                        vmax = 0
-                        vmin = ymin * (1 + padding)
-                    else:
-                        vrange = ymax - ymin if ymax > ymin else abs(ymax) if ymax else 1
-                        vmin = ymin - vrange * padding
-                        vmax = ymax + vrange * padding
-                    ax.set_ylim(vmin, vmax)
+                    ax_update_xlim(ax, args, x_data[0], x_data[-1])
+                    ax_update_ylim(ax, args, *((min(y_data), max(y_data)) if args.wnd else (total_min, total_max)))
                 fig.canvas.flush_events()
                 plt.show()
             # Introduce delay according to acquisition interval
@@ -132,6 +132,7 @@ def do_data(args):
             if args.progress:
                 print()
         if args.stat:
+            # Output statistics
             print('total samples : %d' % total_samples)                
             print('valid samples : %d' % total_valid)
             if total_valid:
