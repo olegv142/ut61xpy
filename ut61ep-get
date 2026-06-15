@@ -50,6 +50,8 @@ def do_data(args):
         plt.ion()
         x_data, y_data = [], []
         fig, ax = plt.subplots()
+        if args.title:
+            fig.canvas.manager.set_window_title(args.title)
         line, = ax.plot(x_data, y_data)
         padding = .075
     try:
@@ -181,6 +183,8 @@ def main():
             help='make sure zero is within vertical axis range')
     parser.add_argument('-w', '--wnd', type=int, required=False, metavar='SAMPLES',
             help='data graph window samples (optional, show all samples by default)')
+    parser.add_argument('-t', '--title', type=str, required=False, metavar='NAME',
+            help='set window title')
 
     subparsers = parser.add_subparsers()
     subparsers.add_parser('list',
