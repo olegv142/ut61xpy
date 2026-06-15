@@ -27,7 +27,7 @@ def do_once(args):
     if dev is None:
         return -1
     try:
-        data = dev_query_raw(dev)
+        data = dev_query_raw(dev, args.tout)
         if not data:
             log.error('no data')
             return -1
@@ -76,7 +76,7 @@ def do_data(args):
         start = ts = time.time()
         while True:
             # Query data
-            data = dev_query_raw(dev)
+            data = dev_query_raw(dev, args.tout)
             if not data:
                 log.error('no data')
                 return -1
@@ -164,12 +164,14 @@ def main():
 
     parser.set_defaults(func=get_help)
 
-    parser.add_argument('--path', type=str, required=False,
-            help='device path (optional, auto detect by default)')
     parser.add_argument('--VID', type=int, required=False, default=DEF_VID,
             help='device vendor id (optional)')
     parser.add_argument('--PID', type=int, required=False, default=DEF_PID,
             help='device product id (optional)')
+    parser.add_argument('--path', type=str, required=False,
+            help='device path (optional, auto detect by default)')
+    parser.add_argument('--tout', type=float, required=False, default=DEF_TOUT, metavar='SECONDS',
+            help='device read timeout (optional, default is %.0f sec)' % DEF_TOUT)
     parser.add_argument('-i', '--interval', type=float, required=False, default=1., metavar='SECONDS',
             help='data acquisition interval (default is 1 sec)')
     parser.add_argument('-f', '--file', type=str, required=False, metavar='FILENAME',
