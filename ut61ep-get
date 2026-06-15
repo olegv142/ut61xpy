@@ -59,7 +59,7 @@ def do_data(args):
     dev = open_device(args)
     if dev is None:
         return -1
-    out_file = sys.stdout if not args.out else open(args.out, 'w')
+    out_file = sys.stdout if not args.file else open(args.file, 'w')
     total_samples = total_valid = 0
     total_sum = total_sum2 = total_sum3 = 0
     total_min = float('inf')
@@ -84,10 +84,11 @@ def do_data(args):
             val = get_value(data)
             val_good = not math.isnan(val)
             print('%.3f%s %f' % (ts if args.epoch else t, args.delimiter, val), file=out_file)
-            if args.out and args.progress:
+            if args.file and args.progress:
                 print('.' if val_good else '!', end='', flush=True)
             total_samples += 1
             if val_good:
+                val = (val - args.offset) * args.mult
                 # Update stat
                 total_valid += 1
                 total_sum   += val
@@ -127,7 +128,7 @@ def do_data(args):
         return 0
     finally:
         dev.close()
-        if args.out:
+        if args.file:
             out_file.close()
             if args.progress:
                 print()
@@ -171,8 +172,12 @@ def main():
             help='device product id (optional)')
     parser.add_argument('-i', '--interval', type=float, required=False, default=1., metavar='SECONDS',
             help='data acquisition interval (default is 1 sec)')
-    parser.add_argument('-o', '--out', type=str, required=False, metavar='FILENAME',
+    parser.add_argument('-f', '--file', type=str, required=False, metavar='FILENAME',
             help='output file name (optional, output to stdout by default)')
+    parser.add_argument('-o', '--offset', type=float, required=False, metavar='VALUE', default=0,
+            help='set data offset')
+    parser.add_argument('-m', '--mult', type=float, required=False, metavar='VALUE', default=1,
+            help='set data multiplier')
     parser.add_argument('-e', '--epoch', action='store_true',
             help='use epoch timestamps (optional, use time since start by default)')
     parser.add_argument('-d', '--delimiter', type=str, default='', metavar='SYMBOL',
