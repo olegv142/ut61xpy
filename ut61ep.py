@@ -96,6 +96,14 @@ def get_value(data):
         return val
     return val * 10 ** (3*((range + range_offset[mode]) // 3))
 
+def get_channel(data):
+    """
+    The UT61E+ can measure DC and AC voltage alternately in DC voltage dial position.
+    This function returns 1 in such mode (25) if the data belongs to the alternative
+    measuring channel, so it represents AC voltage. Otherwise it returns 0.
+    """
+    return 1 if (data[3] == 25) and (data[-1] & 8) else 0
+
 if __name__ == '__main__':
     # Open device and print raw readings as well as the corresponding floating point value
     dev = dev_open()
@@ -105,7 +113,7 @@ if __name__ == '__main__':
             data = dev_query_raw(dev)
             if data:
                 if last_data is None: print()
-                print(data[3], ''.join([chr(d) for d in data[4:12]]), get_value(data))
+                print(data[3], ''.join([chr(d) for d in data[4:12]]), data[-1], '[%d] =' % get_channel(data), get_value(data))
             else:
                 print('.', end='', flush=True)
             last_data = data
