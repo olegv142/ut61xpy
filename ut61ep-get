@@ -11,6 +11,43 @@ import time
 import argparse
 from ut61ep import *
 
+class Stat:
+    """Measured values sequence stat collector"""
+    def __init__(self):
+        self.total_samples = self.total_valid = 0
+        self.total_sum = self.total_sum2 = self.total_sum3 = 0
+        self.total_min = float('inf')
+        self.total_max = -self.total_min
+
+    def account(self, val):
+        self.total_samples += 1
+        if math.isnan(val):
+            return
+        self.total_valid += 1
+        self.total_sum   += val
+        self.total_sum2  += val * val
+        self.total_sum3  += val * val * val
+        self.total_min    = min(self.total_min, val)
+        self.total_max    = max(self.total_max, val)
+
+    def print(self):
+        print('total samples : %d' % self.total_samples)
+        print('valid samples : %d' % self.total_valid)
+        if self.total_valid:
+            aver, aver2 = self.total_sum / self.total_valid, self.total_sum2 / self.total_valid
+            aver_2  = aver * aver
+            sigma_2 = aver2 - aver_2
+            sigma   = math.sqrt(sigma_2) if sigma_2 > 0 else 0
+            m3      = self.total_sum3 / self.total_valid - aver * (aver_2 + 3 * sigma_2)
+            print('min  value    : %f' % self.total_min)
+            print('max  value    : %f' % self.total_max)
+            print('aver value    : %f' % aver)
+            print('std deviation : %f' % sigma)
+            if aver:
+                print('rel. dev. [%%] : %.2f' % (100 * sigma / abs(aver)))
+            if sigma:
+                print('skewness  [%%] : %.2f' % (100 * m3 / (sigma ** 3)))
+
 def do_list(args):
     for dev in hid.enumerate(args.VID, args.PID):
         print(dev['path'].decode('ascii'))
@@ -59,11 +96,10 @@ def do_data(args):
     dev = open_device(args)
     if dev is None:
         return -1
+    out_fmt = '%.3f%s %f'
     out_file = sys.stdout if not args.file else open(args.file, 'w')
-    total_samples = total_valid = 0
-    total_sum = total_sum2 = total_sum3 = 0
-    total_min = float('inf')
-    total_max = -total_min
+    alt_file = None if not args.alt_file else open(args.alt_file, 'w')
+    stat = [Stat(), Stat()]
     if args.graph:
         import matplotlib.pyplot as plt
         plt.ion()
@@ -83,20 +119,18 @@ def do_data(args):
                 return -1
             t = ts - start
             val = get_value(data)
+            val_chan = get_channel(data)
             val_good = not math.isnan(val)
-            print('%.3f%s %f' % (ts if args.epoch else t, args.delimiter, val), file=out_file)
+            if val_chan == 0:
+                print(out_fmt % (ts if args.epoch else t, args.delimiter, val), file=out_file)
+            elif alt_file:
+                print(out_fmt % (ts if args.epoch else t, args.delimiter, val), file=alt_file)
             if args.file and args.progress:
                 print('.' if val_good else '!', end='', flush=True)
-            total_samples += 1
             if val_good:
                 val = (val - args.offset) * args.mult
-                # Update stat
-                total_valid += 1
-                total_sum   += val
-                total_sum2  += val * val
-                total_sum3  += val * val * val
-                total_min    = min(total_min, val)
-                total_max    = max(total_max, val)
+            # Update stat
+            stat[val_chan].account(val)
             if args.graph and val_good:
                 # Update plot
                 if not plt.fignum_exists(fig.number):
@@ -130,24 +164,15 @@ def do_data(args):
             out_file.close()
             if args.progress:
                 print()
+        if args.alt_file:
+            alt_file.close()
         if args.stat:
             # Output statistics
-            print('total samples : %d' % total_samples)                
-            print('valid samples : %d' % total_valid)
-            if total_valid:
-                aver, aver2 = total_sum / total_valid, total_sum2 / total_valid
-                aver_2  = aver * aver
-                sigma_2 = aver2 - aver_2
-                sigma   = math.sqrt(sigma_2) if sigma_2 > 0 else 0
-                m3      = total_sum3 / total_valid - aver * (aver_2 + 3 * sigma_2)
-                print('min  value    : %f' % total_min)
-                print('max  value    : %f' % total_max)
-                print('aver value    : %f' % aver)
-                print('std deviation : %f' % sigma)
-                if aver:
-                    print('rel. dev. [%%] : %.2f' % (100 * sigma / abs(aver)))
-                if sigma:
-                    print('skewness  [%%] : %.2f' % (100 * m3 / (sigma ** 3)))
+            print('\n--- data statistics:')
+            stat[0].print()
+            if args.alt_file:
+                print('\n--- alternative channel:')
+                stat[1].print()
 
 def main():
     parser = argparse.ArgumentParser(
@@ -174,6 +199,8 @@ def main():
             help='data acquisition interval (default is 1 sec)')
     parser.add_argument('-f', '--file', type=str, required=False, metavar='FILENAME',
             help='output file name (optional, output to stdout by default)')
+    parser.add_argument('-a', '--alt-file', type=str, required=False, metavar='FILENAME',
+            help='alternative channel output file name (for storing AC voltage in DC mode)')
     parser.add_argument('-p', '--progress', action='store_true',
             help='show progress when writing to file')
     parser.add_argument('-o', '--offset', type=float, required=False, metavar='VALUE', default=0,
