@@ -48,6 +48,72 @@ class Stat:
             if sigma:
                 print('skewness  [%%] : %.2f' % (100 * m3 / (sigma ** 3)))
 
+class Plotter:
+    """Data plotter"""
+    padding = .075
+
+    def __init__(self, args):
+        import matplotlib.pyplot as plt
+        plt.ion()
+        self.plt = plt
+        self.args = args
+        if args.alt_file:
+            nchan = 2 # dual channel plot
+            self.fig, self.ax = self.plt.subplots(2, 1, sharex = True)
+        else:
+            nchan = 1
+            self.fig, ax = self.plt.subplots()
+            self.ax = [ax]
+        self.x_data, self.y_data = [[] for _ in range(nchan)], [[] for _ in range(nchan)]
+        self.line = [self.ax[i].plot(self.x_data[i], self.y_data[i])[0] for i in range(nchan)]
+        self.vmin, self.vmax = [float('inf')] * nchan, [float('-inf')] * nchan
+        if args.title:
+            self.fig.canvas.manager.set_window_title(args.title)
+
+    def is_closed(self):
+        return not self.plt.fignum_exists(self.fig.number)
+
+    def update_xlim(self, chan, xmin, xmax):
+        ax = self.ax[chan]
+        if xmin == xmax:
+            xmax += args.interval if self.args.interval else 1
+        ax.set_xlim(xmin, xmax)
+
+    def update_ylim(self, chan, ymin, ymax):
+        ax = self.ax[chan]
+        if ymin > 0 and self.args.with_zero:
+            vmin = 0
+            vmax = ymax * (1 + self.padding)
+        elif ymax < 0 and self.args.with_zero:
+            vmax = 0
+            vmin = ymin * (1 + self.padding)
+        else:
+            vrange = ymax - ymin if ymax > ymin else abs(ymax) if ymax else 1
+            vmin = ymin - vrange * self.padding
+            vmax = ymax + vrange * self.padding
+        ax.set_ylim(vmin, vmax)
+
+    def update(self, t, val, chan):
+        if not math.isnan(val) and chan < len(self.ax):
+            self.vmin[chan] = min(self.vmin[chan], val)
+            self.vmax[chan] = max(self.vmax[chan], val)
+            wnd = self.args.wnd
+            xdata, ydata = self.x_data[chan], self.y_data[chan]
+            xdata.append(t)
+            ydata.append(val)
+            pan_zoom = self.ax[chan].get_navigate_mode() is not None
+            while wnd and not pan_zoom and len(xdata) > wnd:
+                xdata.pop(0)
+                ydata.pop(0)
+            self.line[chan].set_data(xdata, ydata)
+            if not pan_zoom:
+                if not chan:
+                    self.update_xlim(chan, xdata[0], xdata[-1])
+                self.update_ylim(chan, *((min(ydata), max(ydata)) if wnd else (self.vmin[chan], self.vmax[chan])))
+        self.fig.canvas.flush_events()
+        self.plt.show()
+
+
 def do_list(args):
     for dev in hid.enumerate(args.VID, args.PID):
         print(dev['path'].decode('ascii'))
@@ -73,25 +139,6 @@ def do_once(args):
     finally:
         dev.close()
 
-def ax_update_xlim(ax, args, xmin, xmax):
-    if xmin == xmax:
-        xmax += args.interval if args.interval else 1
-    ax.set_xlim(xmin, xmax)
-
-def ax_update_ylim(ax, args, ymin, ymax):
-    padding = .075
-    if ymin > 0 and args.with_zero:
-        vmin = 0
-        vmax = ymax * (1 + padding)
-    elif ymax < 0 and args.with_zero:
-        vmax = 0
-        vmin = ymin * (1 + padding)
-    else:
-        vrange = ymax - ymin if ymax > ymin else abs(ymax) if ymax else 1
-        vmin = ymin - vrange * padding
-        vmax = ymax + vrange * padding
-    ax.set_ylim(vmin, vmax)
-
 def do_data(args):
     dev = open_device(args)
     if dev is None:
@@ -101,14 +148,11 @@ def do_data(args):
     alt_file = None if not args.alt_file else open(args.alt_file, 'w')
     stat = [Stat(), Stat()]
     if args.graph:
-        import matplotlib.pyplot as plt
-        plt.ion()
-        x_data, y_data = [], []
-        fig, ax = plt.subplots()
-        if args.title:
-            fig.canvas.manager.set_window_title(args.title)
-        line, = ax.plot(x_data, y_data)
-    sleep_fn = time.sleep if not args.graph else plt.pause
+        plotter = Plotter(args)
+        sleep_fn = plotter.plt.pause
+    else:
+        plotter = None
+        sleep_fn = time.sleep
     try:
         start = ts = time.time()
         while True:
@@ -121,33 +165,23 @@ def do_data(args):
             val = get_value(data)
             val_chan = get_channel(data)
             val_good = not math.isnan(val)
+            # Output data
             if val_chan == 0:
+                if val_good: # apply value transformation
+                    val = (val - args.offset) * args.mult
                 print(out_fmt % (ts if args.epoch else t, args.delimiter, val), file=out_file)
             elif alt_file:
                 print(out_fmt % (ts if args.epoch else t, args.delimiter, val), file=alt_file)
             if args.file and args.progress:
+                # Show progress
                 print('.' if val_good else '!', end='', flush=True)
-            if val_good:
-                val = (val - args.offset) * args.mult
             # Update stat
             stat[val_chan].account(val)
-            if args.graph and val_good:
-                # Update plot
-                if not plt.fignum_exists(fig.number):
+            if plotter:
+                if plotter.is_closed():
                     return 0
-                x_data.append(t)
-                y_data.append(val)
-                pan_zoom = ax.get_navigate_mode() is not None
-                while args.wnd and not pan_zoom and len(x_data) > args.wnd:
-                    x_data.pop(0)
-                    y_data.pop(0)
-                line.set_data(x_data, y_data)
-                if not pan_zoom:
-                    ax_update_xlim(ax, args, x_data[0], x_data[-1])
-                    ax_update_ylim(ax, args, *((min(y_data), max(y_data)) if args.wnd else (total_min, total_max)))
-            if args.graph:
-                fig.canvas.flush_events()
-                plt.show()
+                # Update plot
+                plotter.update(t, val, val_chan)
             # Introduce delay according to acquisition interval
             now = time.time()
             elapsed = now - ts
@@ -167,7 +201,6 @@ def do_data(args):
         if args.alt_file:
             alt_file.close()
         if args.stat:
-            # Output statistics
             print('\n--- data statistics:')
             stat[0].print()
             if args.alt_file:
