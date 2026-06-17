@@ -212,9 +212,10 @@ def main():
 
     parser.set_defaults(func=get_help)
 
-    parser.add_argument('--VID', type=int, required=False, default=DEF_VID,
+    parser.register('type', 'hex-int', lambda s: int(s, 16))
+    parser.add_argument('--VID', type='hex-int', required=False, metavar='HEX', default=DEF_VID,
             help='device vendor id (optional)')
-    parser.add_argument('--PID', type=int, required=False, default=DEF_PID,
+    parser.add_argument('--PID', type='hex-int', required=False, metavar='HEX', default=DEF_PID,
             help='device product id (optional)')
     parser.add_argument('--path', type=str, required=False,
             help='device path (optional, auto detect by default)')
