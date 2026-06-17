@@ -60,10 +60,14 @@ class Plotter:
         if args.alt_file:
             nchan = 2 # dual channel plot
             self.fig, self.ax = self.plt.subplots(2, 1, sharex = True)
+            if args.alt_title:
+                self.ax[1].set_title(args.alt_title)
         else:
             nchan = 1
             self.fig, ax = self.plt.subplots()
             self.ax = [ax]
+        if args.plot_title:
+            self.ax[0].set_title(args.plot_title)
         self.x_data, self.y_data = [[] for _ in range(nchan)], [[] for _ in range(nchan)]
         self.line = [self.ax[i].plot(self.x_data[i], self.y_data[i])[0] for i in range(nchan)]
         self.vmin, self.vmax = [float('inf')] * nchan, [float('-inf')] * nchan
@@ -265,8 +269,13 @@ def main():
             help='data graph window samples (optional, show all samples by default)')
     data_parser.add_argument('-z', '--with-zero', action='store_true',
             help='make sure zero is within data graph vertical axis range')
-    data_parser.add_argument('-t', '--title', type=str, required=False, metavar='NAME',
+    data_parser.add_argument('-t', '--title', type=str, required=False, metavar='TEXT',
             help='set data graph window title')
+    data_parser.add_argument('--plot-title', type=str, required=False, metavar='TEXT',
+            help='set data plot title')
+    data_parser.add_argument('--alt-title', type=str, required=False, metavar='TEXT',
+            help='set alternative channel data plot title')
+    
 
     args = parser.parse_args()
     return args.func(args)
