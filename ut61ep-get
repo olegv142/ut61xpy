@@ -26,14 +26,25 @@ class Plotter:
             self.fig, self.ax = self.plt.subplots(2, 1, sharex = True)
             if args.alt_title:
                 self.ax[1].set_title(args.alt_title)
+            if args.alt_hline:
+                for y in args.alt_hline:
+                    self.ax[1].axhline(y, linestyle=args.hline_style, color=args.hline_color)
         else:
             nchan = 1
             self.fig, ax = self.plt.subplots()
             self.ax = [ax]
         if args.plot_title:
             self.ax[0].set_title(args.plot_title)
+        if args.hline:
+            for y in args.hline:
+                self.ax[0].axhline(y, linestyle=args.hline_style, color=args.hline_color)
+
         self.x_data, self.y_data = [[] for _ in range(nchan)], [[] for _ in range(nchan)]
-        self.line = [self.ax[i].plot(self.x_data[i], self.y_data[i])[0] for i in range(nchan)]
+        self.line = [self.ax[i].plot(
+                self.x_data[i], self.y_data[i],
+                linestyle=args.line_style,
+                color=(args.line_color, args.alt_line_color)[i]
+            )[0] for i in range(nchan)]
         self.vmin, self.vmax = [float('inf')] * nchan, [float('-inf')] * nchan
         if args.title:
             self.fig.canvas.manager.set_window_title(args.title)
@@ -54,6 +65,14 @@ class Plotter:
 
     def update_ylim(self, chan, ymin, ymax):
         ax = self.ax[chan]
+        if not chan and self.args.hline:
+            for y in self.args.hline:
+                ymin = min(ymin, y)
+                ymax = max(ymax, y)
+        if chan and self.args.alt_hline:
+            for y in self.args.alt_hline:
+                ymin = min(ymin, y)
+                ymax = max(ymax, y)        
         if ymin > 0 and self.args.with_zero:
             vmin = 0
             vmax = ymax * (1 + self.padding)
@@ -249,6 +268,20 @@ def main():
             help='save figure to specified file on closing')
     data_parser.add_argument('--save-dpi', type=int, required=False, metavar='DPI', default=180,
             help='saving figure resolution (optional, default is 180)')
+    data_parser.add_argument('--hline', type=float, metavar='VAL', action='append',
+            help='draw horizontal line through the specified vertical axis value (may be used multiple times)')
+    data_parser.add_argument('--alt-hline', type=float, metavar='VAL', action='append',
+            help='draw horizontal line through the specified alternative channel vertical axis value (may be used multiple times)')
+    data_parser.add_argument('--line-style', type=str, required=False, metavar='STR', default='-',
+            help="line style specifier (optional, default is '-')")
+    data_parser.add_argument('--hline-style', type=str, required=False, metavar='STR', default='--',
+            help="horizontal line style specifier (optional, default is '--')")
+    data_parser.add_argument('--line-color', type=str, required=False, metavar='STR', default='C0',
+            help="line color specifier (optional, default is 'C0')")
+    data_parser.add_argument('--alt-line-color', type=str, required=False, metavar='STR', default='C2',
+            help="alternative channel line color specifier (optional, default is 'C2')")
+    data_parser.add_argument('--hline-color', type=str, required=False, metavar='STR', default='C1',
+            help="horizontal line color specifier (optional, default is 'C1')")
 
     args = parser.parse_args()
     return args.func(args)
