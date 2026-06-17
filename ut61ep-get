@@ -210,8 +210,7 @@ def do_data(args):
 def main():
     parser = argparse.ArgumentParser(
             description='UNI-T UT61E+ data acquisition tool',
-            usage='%(prog)s [options] list|once|data',
-            formatter_class=lambda prog: argparse.HelpFormatter(prog, max_help_position=30)
+            usage='%(prog)s [options] list|once|data [command options]'
         )
 
     def get_help(args):
@@ -228,32 +227,6 @@ def main():
             help='device path (optional, auto detect by default)')
     parser.add_argument('--tout', type=float, required=False, default=DEF_TOUT, metavar='SECONDS',
             help='device read timeout (optional, default is %.0f sec)' % DEF_TOUT)
-    parser.add_argument('-i', '--interval', type=float, required=False, default=1., metavar='SECONDS',
-            help='data acquisition interval (default is 1 sec)')
-    parser.add_argument('-f', '--file', type=str, required=False, metavar='FILENAME',
-            help='output file name (optional, output to stdout by default)')
-    parser.add_argument('-a', '--alt-file', type=str, required=False, metavar='FILENAME',
-            help='alternative channel output file name (for storing AC voltage in DC mode)')
-    parser.add_argument('-p', '--progress', action='store_true',
-            help='show progress when writing to file')
-    parser.add_argument('-o', '--offset', type=float, required=False, metavar='VALUE', default=0,
-            help='set data offset')
-    parser.add_argument('-m', '--mult', type=float, required=False, metavar='VALUE', default=1,
-            help='set data multiplier')
-    parser.add_argument('-e', '--epoch', action='store_true',
-            help='use epoch timestamps (optional, use time since start by default)')
-    parser.add_argument('-d', '--delimiter', type=str, default='', metavar='SYMBOL',
-            help='data delimiter on output (optional, space by default)')
-    parser.add_argument('-s', '--stat', action='store_true',
-            help='output statistic upon termination')
-    parser.add_argument('-g', '--graph', action='store_true',
-            help='show data graph')
-    parser.add_argument('-w', '--wnd', type=int, required=False, metavar='SAMPLES',
-            help='data graph window samples (optional, show all samples by default)')
-    parser.add_argument('-z', '--with-zero', action='store_true',
-            help='make sure zero is within data graph vertical axis range')
-    parser.add_argument('-t', '--title', type=str, required=False, metavar='NAME',
-            help='set data graph window title')
 
     subparsers = parser.add_subparsers()
     subparsers.add_parser('list',
@@ -262,9 +235,38 @@ def main():
     subparsers.add_parser('once',
             help='get single reading'
         ).set_defaults(func=lambda args: do_once(args))
-    subparsers.add_parser('data',
-            help='read data continuously'
-        ).set_defaults(func=lambda args: do_data(args))
+    data_parser = subparsers.add_parser('data',
+            help='read data continuously',
+            formatter_class=lambda prog: argparse.HelpFormatter(prog, max_help_position=40)
+        )
+    data_parser.set_defaults(func=lambda args: do_data(args))
+
+    data_parser.add_argument('-i', '--interval', type=float, required=False, default=1., metavar='SECONDS',
+            help='data acquisition interval (default is 1 sec)')
+    data_parser.add_argument('-f', '--file', type=str, required=False, metavar='FILENAME',
+            help='output file name (optional, output to stdout by default)')
+    data_parser.add_argument('-a', '--alt-file', type=str, required=False, metavar='FILENAME',
+            help='alternative channel output file name (for storing AC voltage in DC mode)')
+    data_parser.add_argument('-p', '--progress', action='store_true',
+            help='show progress when writing to file')
+    data_parser.add_argument('-o', '--offset', type=float, required=False, metavar='VALUE', default=0,
+            help='set data offset')
+    data_parser.add_argument('-m', '--mult', type=float, required=False, metavar='VALUE', default=1,
+            help='set data multiplier')
+    data_parser.add_argument('-e', '--epoch', action='store_true',
+            help='use epoch timestamps (optional, use time since start by default)')
+    data_parser.add_argument('-d', '--delimiter', type=str, default='', metavar='SYMBOL',
+            help='data delimiter on output (optional, space by default)')
+    data_parser.add_argument('-s', '--stat', action='store_true',
+            help='output statistic upon termination')
+    data_parser.add_argument('-g', '--graph', action='store_true',
+            help='show data graph')
+    data_parser.add_argument('-w', '--wnd', type=int, required=False, metavar='SAMPLES',
+            help='data graph window samples (optional, show all samples by default)')
+    data_parser.add_argument('-z', '--with-zero', action='store_true',
+            help='make sure zero is within data graph vertical axis range')
+    data_parser.add_argument('-t', '--title', type=str, required=False, metavar='NAME',
+            help='set data graph window title')
 
     args = parser.parse_args()
     return args.func(args)
