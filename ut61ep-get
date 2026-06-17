@@ -73,6 +73,11 @@ class Plotter:
         self.vmin, self.vmax = [float('inf')] * nchan, [float('-inf')] * nchan
         if args.title:
             self.fig.canvas.manager.set_window_title(args.title)
+        if args.save_on_close:
+            self.fig.canvas.mpl_connect('close_event', self.on_close)
+
+    def on_close(self, evt):
+        self.fig.savefig(self.args.save_on_close, bbox_inches='tight', dpi=self.args.save_dpi)
 
     def is_closed(self):
         return not self.plt.fignum_exists(self.fig.number)
@@ -275,7 +280,10 @@ def main():
             help='set data plot title')
     data_parser.add_argument('--alt-title', type=str, required=False, metavar='TEXT',
             help='set alternative channel data plot title')
-    
+    data_parser.add_argument('--save-on-close', type=str, required=False, metavar='FILENAME',
+            help='save figure to specified file on closing')
+    data_parser.add_argument('--save-dpi', type=int, required=False, metavar='DPI', default=180,
+            help='saving figure resolution (optional, default is 180)')
 
     args = parser.parse_args()
     return args.func(args)
