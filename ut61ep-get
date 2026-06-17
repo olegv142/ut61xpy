@@ -8,6 +8,7 @@ import hid
 import sys
 import math
 import time
+import pickle
 import argparse
 from ut61ep import *
 from ut61stat import StatCollector
@@ -283,8 +284,26 @@ def main():
             help="alternative channel line color specifier (optional, default is 'C2')")
     data_parser.add_argument('--hline-color', type=str, required=False, metavar='STR', default='C1',
             help="horizontal line color specifier (optional, default is 'C1')")
+    data_parser.add_argument('--cfg-save', type=str, required=False, metavar='FILENAME',
+            help='save command line options to the file with given name')
+    data_parser.add_argument('-c', '--cfg-load', type=str, required=False, metavar='FILENAME',
+            help='load command line options from the file with given name')
 
     args = parser.parse_args()
+
+    if args.cfg_load:
+        with open(args.cfg_load, 'rb') as f:
+            opts = pickle.loads(f.read())
+        data_parser.set_defaults(func = args.func, **opts)
+        args = parser.parse_args()
+
+    if args.cfg_save:
+        opts = args.__dict__.copy()
+        del opts['func']
+        opts['cfg_save'] = None
+        with open(args.cfg_save, 'wb') as f:
+            f.write(pickle.dumps(opts))
+
     return args.func(args)
 
 if __name__ == '__main__':
