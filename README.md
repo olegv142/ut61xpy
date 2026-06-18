@@ -29,7 +29,7 @@ The **ut61xp-get** will auto detect UT-D09A USB adapter provided that there is e
 
 Dual channel mode is handy while reading data in DC+AC mode of UT61E+. To use this mode you will need to properly setup your device and specify filename for storing second channel by means of *-a/--alt-file* option. This may be convenient, but note that DC+AC mode has several disadvantages compared to other modes:
  - it takes ~0.7 sec to read single value of the single channel
- - the voltage channel fluctuates much more than in other modes
+ - the DC voltage channel fluctuates much more than in other modes
 
 ## Graph plotting
 
