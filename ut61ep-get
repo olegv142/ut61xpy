@@ -56,7 +56,7 @@ class Plotter:
     def update_xlim(self, chan, xmin, xmax):
         ax = self.ax[chan]
         if xmin == xmax:
-            xmax += args.interval if self.args.interval else 1
+            xmax += self.args.interval if self.args.interval else 1
         ax.set_xlim(xmin, xmax)
 
     def update_ylim(self, chan, ymin, ymax):
@@ -103,17 +103,20 @@ class Plotter:
 
 
 def do_list(args):
+    """Print list of HID device paths"""
     for dev in hid.enumerate(args.VID, args.PID):
         print(dev['path'].decode('ascii'))
     return 0
 
 def open_device(args):
+    """Open device by path or VIP/PID"""
     if args.path:
         return dev_open_path(args.path.encode('ascii'))
     else:
         return dev_open(args.VID, args.PID)
 
 def do_once(args):
+    """Read and print single value"""
     dev = open_device(args)
     if dev is None:
         return -1
@@ -128,6 +131,11 @@ def do_once(args):
         dev.close()
 
 def do_data(args):
+    """
+    Read data continuously and plot them if -g option is present in args.
+    The read loop ends either by typing Ctr-C (without -g option) or by
+    closing data graph window.
+    """
     dev = open_device(args)
     if dev is None:
         return -1
@@ -282,13 +290,13 @@ def main():
 
     args = parser.parse_args()
 
-    if args.cfg_load:
+    if getattr(args, 'cfg_load', None):
         with open(args.cfg_load, 'r') as f:
             opts = json.loads(f.read())
         data_parser.set_defaults(func = args.func, **opts)
         args = parser.parse_args()
 
-    if args.cfg_save:
+    if getattr(args, 'cfg_save', None):
         opts = args.__dict__.copy()
         del opts['func']
         opts['cfg_save'] = None
