@@ -83,7 +83,9 @@ The corresponding configuration will be saved to ut61d.cfg
 python ut61xpy/ut61xp-get data -c ut61d.cfg -i 0
 python ut61xpy/ut61xp-get data -c ut61e.cfg -a a.data --plot-title DC --alt-title AC
 ```
-The first command will read data from UT61D+ at maximum rate. The second command will acquire data from UT61E+ in DC+AC mode. One can even create dedicated configuration file for that:
+The first command will read data from UT61D+ at maximum rate. The second command will acquire data from UT61E+ in DC+AC mode.
+
+4. One can even create specialized configuration file for DC+AC mode by modifying basic configuration:
 ```
 python ut61xpy/ut61xp-get data -c ut61e.cfg -a a.data --plot-title DC --alt-title AC --cfg-save acdc.cfg
 ```
@@ -95,6 +97,6 @@ Of cause the *./ut61xpy/ut61xp-get* invocation will work on Linux as well since 
 
 ## Device paths and Windows/Linux peculiarities
 
-The configuration tricks shown above work just because the auto-detected device path becomes part of the configuration saved with *--cfg-save* option. One can check that by looking at the configuration file content saved as text. But what is the device path after all? It turns out that on Windows it contains some unique device identifier but on Linux it depends only on the USB port where the device is attached. So its critically important to use different ports for different devices and always use the same port for the particular device while working with configurations on Linux.
+The configuration tricks shown above work just because the auto-detected device path becomes part of the configuration saved with *--cfg-save* option. One can check that by looking at the configuration file content saved as text. But what is the device path after all? It turns out that on Windows it contains some unique device identifier but on Linux it depends only on the USB port where the device is attached. So its critically important to use different ports for different devices and always use the same port for the particular device while working with configurations / device paths on Linux.
 
 
