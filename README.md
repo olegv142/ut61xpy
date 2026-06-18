@@ -9,6 +9,7 @@ The code was reworked with the following goals in mind:
  - ensure seamless working on Windows and Linux
  - create simple cli tool (**ut61xp-get**) for data collection and visualization
  - support dual channel (DC+AC mode of UT61E+) reading and plotting
+ - convenient working with several devices simultaneously
 
 ## Installation
 
@@ -94,6 +95,7 @@ Now one can just execute the following short command line to use DC+AC readout w
 python ut61xpy/ut61xp-get data -c acdc.cfg
 ```
 Of cause the *./ut61xpy/ut61xp-get* invocation will work on Linux as well since *ut61xp-get* is executable script on this system.
+Note that to be able to combine measurements made by different devices you will probably have to use epoch time option (*-e*). Otherwise data samples originated from different devices may be read at different time even if they have the same time stamp (since its relative to acquisition start of the particular readout session).
 
 ## Device paths and Windows/Linux peculiarities
 
