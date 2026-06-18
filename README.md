@@ -93,7 +93,7 @@ Now one can just execute the following short command line to use DC+AC readout w
 ```
 python ut61xpy/ut61xp-get data -c acdc.cfg
 ```
-Of cause the *./ut61xpy/ut61xp-get* invocation will work on Linux as well since ut61xp-get is executable script on this system.
+Of cause the *./ut61xpy/ut61xp-get* invocation will work on Linux as well since *ut61xp-get* is executable script on this system.
 
 ## Device paths and Windows/Linux peculiarities
 
