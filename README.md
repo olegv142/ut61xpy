@@ -91,6 +91,10 @@ Now one can just execute the following short command line to use DC+AC readout w
 ```
 python ut61xpy/ut61xp-get data -c acdc.cfg
 ```
- 
+Of cause the *./ut61xpy/ut61xp-get* invocation will work on Linux as well since ut61xp-get is executable script on this system.
+
+## Device paths and Windows/Linux peculiarities
+
+The configuration tricks shown above work just because the auto-detected device path becomes part of the configuration saved with *--cfg-save* option. One can check that by looking at the configuration file content saved as text. But what is the device path after all? It turns out that on Windows it contains some unique device identifier but on Linux it depends only on the USB port where the device is attached. So its critically important to use different ports for different devices and always use the same port for the particular device while working with configurations on Linux.
 
 
