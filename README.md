@@ -1,4 +1,4 @@
-# UNI-T UT61B/D/E+ digital multimeter communication tools
+# UNI-T UT61B/D/E+ digital multimeter communication and data plotting tools
 The UNI-T UT61E+ is high precision low cost digital multimeter with optically isolated USB interface which makes it perfect choice for hobbyist and professionals on tight budget.
 The UT61B/D+ models are lower cost 6000 count versions sharing the same excellent DC voltage measuring accuracy of 10uV and having some additional features like thermocouple measuring (UT61D+).
 This repository provides simple alternative to vendor data collection program. Since the code is written in python it may be easily incorporated onto your complex measuring or automation system. 
