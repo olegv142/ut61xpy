@@ -8,7 +8,7 @@ import hid
 import sys
 import math
 import time
-import pickle
+import json
 import argparse
 from ut61ep import *
 from ut61stat import StatCollector
@@ -292,8 +292,8 @@ def main():
     args = parser.parse_args()
 
     if args.cfg_load:
-        with open(args.cfg_load, 'rb') as f:
-            opts = pickle.loads(f.read())
+        with open(args.cfg_load, 'r') as f:
+            opts = json.loads(f.read())
         data_parser.set_defaults(func = args.func, **opts)
         args = parser.parse_args()
 
@@ -301,8 +301,8 @@ def main():
         opts = args.__dict__.copy()
         del opts['func']
         opts['cfg_save'] = None
-        with open(args.cfg_save, 'wb') as f:
-            f.write(pickle.dumps(opts))
+        with open(args.cfg_save, 'w') as f:
+            f.write(json.dumps(opts))
 
     return args.func(args)
 
