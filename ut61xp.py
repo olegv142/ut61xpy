@@ -1,5 +1,5 @@
 """
-The UNI-T UT61E+ digital multi-meter communication helper.
+The UNI-T UT61B/D/E+ digital multi-meter communication helper.
 Its inspired by:
  https://github.com/aroum/unit_ut61eplus_python
  https://github.com/ljakob/unit_ut61eplus

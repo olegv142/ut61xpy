@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-The UNI-T UT61E+ digital multi-meter data acquisition tool
+The UNI-T UT61B/D/E+ digital multi-meter data acquisition and plotting tool
 """
 
 import hid
@@ -10,8 +10,8 @@ import math
 import time
 import json
 import argparse
-from ut61ep import *
-from ut61stat import StatCollector
+from ut61xp import *
+from data_stat import StatCollector
 
 class Plotter:
     """Data plotter"""
