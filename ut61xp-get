@@ -111,13 +111,14 @@ def do_list(args):
 def open_device(args):
     """Open device by path or VIP/PID"""
     if args.path:
-        return dev_open_path(args.path.encode('ascii'))
+        path = args.path.encode('ascii')
+        return dev_open_path(path), path
     else:
-        return dev_open(args.VID, args.PID)
+        return dev_open2(args.VID, args.PID)
 
 def do_once(args):
     """Read and print single value"""
-    dev = open_device(args)
+    dev, path = open_device(args)
     if dev is None:
         return -1
     try:
@@ -130,15 +131,29 @@ def do_once(args):
     finally:
         dev.close()
 
+def maybe_save_cfg(args, dev_path):
+    """Save configuration if necessary"""
+    cfg_save_fname = getattr(args, 'cfg_save', None)
+    if cfg_save_fname:
+        opts = args.__dict__.copy()
+        del opts['func']
+        opts['cfg_save'] = None
+        opts['path'] = dev_path.decode('ascii')
+        with open(cfg_save_fname, 'w') as f:
+            f.write(json.dumps(opts))    
+
 def do_data(args):
     """
     Read data continuously and plot them if -g option is present in args.
     The read loop ends either by typing Ctr-C (without -g option) or by
     closing data graph window.
     """
-    dev = open_device(args)
+    dev, path = open_device(args)
     if dev is None:
         return -1
+
+    maybe_save_cfg(args, path)
+
     out_fmt = '%.3f%s %f'
     out_file = sys.stdout if not args.file else open(args.file, 'w')
     alt_file = None if not args.alt_file else open(args.alt_file, 'w')
@@ -290,18 +305,12 @@ def main():
 
     args = parser.parse_args()
 
-    if getattr(args, 'cfg_load', None):
-        with open(args.cfg_load, 'r') as f:
+    cfg_load_fname = getattr(args, 'cfg_load', None)
+    if cfg_load_fname:
+        with open(cfg_load_fname, 'r') as f:
             opts = json.loads(f.read())
         data_parser.set_defaults(func = args.func, **opts)
         args = parser.parse_args()
-
-    if getattr(args, 'cfg_save', None):
-        opts = args.__dict__.copy()
-        del opts['func']
-        opts['cfg_save'] = None
-        with open(args.cfg_save, 'w') as f:
-            f.write(json.dumps(opts))
 
     return args.func(args)
 

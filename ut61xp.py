@@ -29,16 +29,22 @@ def dev_open_path(path):
     device.set_nonblocking(True)
     return device
 
-def dev_open(vid=DEF_VID, pid=DEF_PID):
-    """Open device given its VID, PID"""
+def dev_open2(vid=DEF_VID, pid=DEF_PID):
+    """Open device given its VID, PID. Returns device, path tuple."""
     devs = hid.enumerate(vid, pid)
     if not devs:
         log.error('not found')
-        return None
+        return None, None
     if len(devs) > 1:
         log.error('%d devices found', len(devs))
-        return None
-    return dev_open_path(devs[0]['path'])
+        return None, None
+    path = devs[0]['path']
+    return dev_open_path(path), path
+
+def dev_open(vid=DEF_VID, pid=DEF_PID):
+    """Open device given its VID, PID"""
+    dev, path = dev_open2(vid, pid)
+    return dev
 
 def dev_query_raw(dev, tout=DEF_TOUT, idle_sleep=time.sleep):
     """Read and validate raw data packet"""
