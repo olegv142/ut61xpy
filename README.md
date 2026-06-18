@@ -38,6 +38,19 @@ The **ut61xp-get data** command will plot data read from device in separate wind
 
 The configuration is the file storing the full set of command line options in the form of json dictionary. Use *--cfg-save* to create such file filled with options specified in the current command line and *-c/--cfg-load* option to load such file back. They may be handy to save typing and even more importantly to make data acquisition from several devices easier. Several examples of using them while reading data from several devices simultaneously will be given below.
 
+## Printing data statistics
+
+With *-s/--stat* the **ut61xp-get data** command will print various collected data statistic metrics upon acquisition termination. In particular
+ - the number of data samples (total and valid)
+ - the min / max values
+ - the median and pure average values
+ - the standard deviation (absolute and relative)
+ - the 3rd central moment relative to the standard deviation (*skewness*)
+ - the 4th central moment relative to the standard deviation minus 3 (*kurtosis exess*)
+
+The last two metrics may be used to characterize deviations from the mean. The smaller they are the close the values distribution to the standard one with *Gaussian* noise.
+
+
 ## Getting help
 
 Execute **ut61xp-get** tool with *-h* option to get detailed information about command line options. On Windows:
