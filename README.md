@@ -65,30 +65,32 @@ On Linux the following will work either:
 
 ## Working with several devices simultaneously
 
-Suppose we have UT61E+ and UT61D+ devices and we are going to read data from them simultaneously. We use different models just for illustrative purpose, they may be the same. We can find out path to each device by connecting them one by one and using **ut61xp-get list** command. After that we can pass the path to **ut61xp-get data** command like *ut61xp-get --path <path> data <options>* but it takes a lot of typing. Using configurations may make life easier. One can do the following
- 1. Connect first device (UT61E+) only and issue the command
- ```
- python ut61xpy/ut61xp-get data -gps -f e.data -t UT61E+ --cfg-save ut61e.cfg
- ```
- It will auto detect device, plot the data saving it to file e.data showing a progress and printing stats on termination. It will also create the configuration file ut61e.cfg. The *-t* option will set window title so we can tell which window shows data from which device.
- 2. Disconnect first device and connect other device (UT61D+) and run the command
- ```
- python ut61xpy/ut61xp-get data -gps -f d.data -t UT61D+ --cfg-save ut61d.cfg 
- ```
- Now the configuration will be saved to ut61d.cfg
- 3. Now we can connect both devices and run some acquisition in parallel (in separate terminals)
- ```
- python ut61xp-get data -c ut61d.cfg -i 0
- python ut61xp-get data -c ut61e.cfg -a a.data --plot-title DC --alt-title AC
- ```
- The first command will read data from UT61D+ at maximum rate. The second command will acquire data from UT61E+ in DC+AC mode. One can even create dedicated configuration file for that:
- ```
- python ut61xp-get data -c ut61e.cfg -a a.data --plot-title DC --alt-title AC --cfg-save acdc.cfg
- ```
- Now one can just execute the following short command line to use DC+AC readout with dual plot graph.
- ```
- python ut61xp-get data -c acdc.cfg
- ```
+Suppose we have UT61E+ and UT61D+ devices and are going to read data from them simultaneously. We use different models just for illustrative purpose, they may be the same. We can find out path to each device by connecting them one by one and using **ut61xp-get list** command. After that we can pass the path to **ut61xp-get data** command like *ut61xp-get --path PATH data OPTIONS* but it takes a lot of typing. Using configurations may make life easier. One can do the following
+1. Connect first device (UT61E+) only and issue the command:
+```
+python ut61xpy/ut61xp-get data -gps -f e.data -t UT61E+ --cfg-save ut61e.cfg
+```
+It will auto detect device, plot the data saving it to the file e.data, showing a progress and printing stats on termination. It will also create the configuration file ut61e.cfg. The *-t* option will set window title so we can tell which window shows data from which device.
+
+2. Disconnect first device and connect other device (UT61D+) and run the command:
+```
+python ut61xpy/ut61xp-get data -gps -f d.data -t UT61D+ --cfg-save ut61d.cfg 
+```
+The corresponding configuration will be saved to ut61d.cfg
+
+3. Now we can connect both devices and run some acquisition in parallel (in separate terminals):
+```
+python ut61xpy/ut61xp-get data -c ut61d.cfg -i 0
+python ut61xpy/ut61xp-get data -c ut61e.cfg -a a.data --plot-title DC --alt-title AC
+```
+The first command will read data from UT61D+ at maximum rate. The second command will acquire data from UT61E+ in DC+AC mode. One can even create dedicated configuration file for that:
+```
+python ut61xpy/ut61xp-get data -c ut61e.cfg -a a.data --plot-title DC --alt-title AC --cfg-save acdc.cfg
+```
+Now one can just execute the following short command line to use DC+AC readout with dual plot graph:
+```
+python ut61xpy/ut61xp-get data -c acdc.cfg
+```
  
 
 
