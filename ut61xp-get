@@ -19,6 +19,7 @@ class Plotter:
 
     def __init__(self, args):
         import matplotlib.pyplot as plt
+        plt.rcParams["figure.raise_window"] = False
         plt.ion()
         self.plt = plt
         self.args = args
