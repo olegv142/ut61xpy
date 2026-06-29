@@ -17,7 +17,7 @@ import asyncio
 
 log = logging.getLogger('DEV')
 
-DEF_TOUT    = 5
+DEF_TOUT    = 4
 DEF_VID     = 0x1a86
 DEF_PID     = 0xe429
 DEF_BT_NAME = 'UT-D07B'
@@ -50,8 +50,11 @@ class Device:
     def _async_exec(co):
         """Executes given co-routine and returns result"""
         Device._evloop_start()
-        future = asyncio.run_coroutine_threadsafe(co, Device.evloop)
-        return future.result()
+        try:
+            future = asyncio.run_coroutine_threadsafe(co, Device.evloop)
+            return future.result()
+        except Exception:
+            return None
 
     @staticmethod
     def hid_list_paths(vid=DEF_VID, pid=DEF_PID):
@@ -107,13 +110,9 @@ class Device:
         """Opens BT device given its mac address"""
         from bleak import BleakClient
         dev = BleakClient(addr)
-        async def a_connect():
-            try:
-                await dev.connect()
-            except Exception:
-                pass
-        Device._async_exec(a_connect())
+        Device._async_exec(dev.connect())
         if not dev.is_connected:
+            log.error('failed to connect to device %s', addr)
             return None
         return Device(dev, addr, True)
 
@@ -168,7 +167,7 @@ class Device:
         async def a_query():
             attempts = int(10 * tout)
             await dev.start_notify(BT_RX_CHAR, notify_cb)
-            await dev.write_gatt_char(BT_TX_CHAR, bytearray(TRIGGER_CMD))
+            await dev.write_gatt_char(BT_TX_CHAR, bytearray(TRIGGER_CMD), response=False)
             while not data and attempts:
                 attempts -= 1
                 await asyncio.sleep(.1)

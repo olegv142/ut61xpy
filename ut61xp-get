@@ -125,7 +125,7 @@ def do_once(args):
     try:
         data = dev.query_raw(args.tout)
         if not data:
-            log.error('no data')
+            log.error('\nno data')
             return -1
         print(Device.get_value(data))
         return 0
@@ -175,9 +175,11 @@ def do_data(args):
             if not data:
                 if args.file and args.progress:
                     print('~', end='', flush=True)
+                if plotter and plotter.is_closed():
+                    return 0
                 errs_left -= 1
                 if errs_left <= 0:
-                    log.error('no data')
+                    log.error('\nno data')
                     return -1
                 else:
                     continue
