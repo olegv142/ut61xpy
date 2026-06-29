@@ -47,12 +47,12 @@ class Device:
         Device.evloop_thread.start()
 
     @staticmethod
-    def _async_exec(co):
+    def _async_exec(co, wait=True):
         """Executes given co-routine and returns result"""
         Device._evloop_start()
         try:
             future = asyncio.run_coroutine_threadsafe(co, Device.evloop)
-            return future.result()
+            return future.result() if wait else future
         except Exception as e:
             log.debug(e)
             return None
@@ -175,11 +175,9 @@ class Device:
             while not self.bt_last_data and attempts:
                 attempts -= 1
                 await asyncio.sleep(.1)
-        query = threading.Thread(target=lambda: Device._async_exec(a_query()))
-        query.start()
-        while query.is_alive():
+        query = Device._async_exec(a_query(), wait=False)
+        while not query.done():
             idle_sleep(.1)
-        query.join()
         if not self.bt_last_data:
             return None
         return Device._validate_raw_data(self.bt_last_data)
