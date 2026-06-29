@@ -12,7 +12,7 @@ The code was reworked with the following goals in mind:
  - convenient working with several devices simultaneously
  - support for USB HID and Bluetooth communication channel
 
-The scripts work via USB HID adapter D-09A commonly supplied with UT61X+ multimeter. Alternatively one can use UT-D07B Bluetooth adapter which provides the wireless communication channel at the expense of the lower communication speed. The minimum data readout interval is around 180 msec for USB adapter and around 800 msec for Bluetooth adapter.
+The scripts work via USB HID adapter D-09A commonly supplied with UT61X+ multimeter. Alternatively one can use UT-D07B Bluetooth adapter which provides the wireless communication channel at the expense of the lower communication speed. The minimum data readout interval is around 180 msec for USB adapter and around 800 msec for Bluetooth adapter. Yet the BT adapter shows surprisingly good communication range. Its even able to communicate through the layer of reinforced concrete.
 
 ## Installation
 
