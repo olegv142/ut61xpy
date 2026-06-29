@@ -1,11 +1,12 @@
 """
 The UNI-T UT61B/D/E+ digital multimeter communication helper.
 Its inspired by:
- https://github.com/aroum/unit_ut61eplus_python
  https://github.com/ljakob/unit_ut61eplus
+ https://github.com/aroum/unit_ut61eplus_python
 The code was reworked with the following goals in mind:
  - keep code as simple as possible
  - seamless working on Windows and Linux
+ - support for USB HID and Bluetooth communication channel
 """
 
 import hid
@@ -15,15 +16,15 @@ import threading
 
 log = logging.getLogger('DEV')
 
-DEF_TOUT = 5
-DEF_VID = 0x1a86
-DEF_PID = 0xe429
+DEF_TOUT    = 5
+DEF_VID     = 0x1a86
+DEF_PID     = 0xe429
 DEF_BT_NAME = 'UT-D07B'
-BT_TX_CHAR = '49535343-8841-43f4-a8d4-ecbe34729bb3'
-BT_RX_CHAR = '49535343-1e4d-4bd9-ba61-23c647249616'
+BT_TX_CHAR  = '49535343-8841-43f4-a8d4-ecbe34729bb3'
+BT_RX_CHAR  = '49535343-1e4d-4bd9-ba61-23c647249616'
 
 TRIGGER_CMD = [0xAB, 0xCD, 0x03, 0x5E, 0x01, 0xD9]
-DATA_LEN = 14
+DATA_LEN    = 14
 
 class Device:
     @staticmethod
@@ -52,7 +53,7 @@ class Device:
 
     @staticmethod
     def hid_open_path(path):
-        """Open device given the path"""
+        """Opens device given the path"""
         if isinstance(path, str):
             path = path.encode('ascii')
         dev = hid.device()
@@ -66,7 +67,7 @@ class Device:
 
     @staticmethod
     def hid_open(vid=DEF_VID, pid=DEF_PID):
-        """Open device given its VID, PID. Returns device, path tuple."""
+        """Opens device given its VID, PID. Returns device, path tuple."""
         paths = Device.hid_list_paths(vid, pid)
         if not paths:
             log.error('not found')
@@ -78,7 +79,7 @@ class Device:
 
     @staticmethod
     def bt_open_addr(addr):
-        """Open BT device given its mac address"""
+        """Opens BT device given its mac address"""
         import asyncio
         from bleak import BleakClient
         dev = BleakClient(addr)
@@ -94,7 +95,7 @@ class Device:
 
     @staticmethod
     def bt_open(name=DEF_BT_NAME):
-        """Open BT device given its name"""
+        """Opens BT device given its name"""
         addrs = Device.bt_list_addrs(name)
         if not addrs:
             log.error('not found')
@@ -105,13 +106,14 @@ class Device:
         return Device.bt_open_addr(addrs[0])
 
     def query_raw(self, tout=DEF_TOUT, idle_sleep=time.sleep):
-        """Read and validate raw data packet"""
+        """Reads and validates raw data packet"""
         if not self.bt:
             return self.hid_query_raw(self.dev, tout, idle_sleep)
         else:
             return self.bt_query_raw(self.dev, tout, idle_sleep)
 
     def close(self):
+        """Closes device if its still open"""
         if self.dev is None:
             return
         if not self.bt:
@@ -123,6 +125,7 @@ class Device:
 
     @staticmethod
     def hid_query_raw(dev, tout=DEF_TOUT, idle_sleep=time.sleep):
+        """Queries raw data packet from HID device"""
         attempts = int(10 * tout)
         dev.write([0, len(TRIGGER_CMD)] + TRIGGER_CMD)
         while True:
@@ -142,6 +145,7 @@ class Device:
 
     @staticmethod
     def bt_query_raw(dev, tout=DEF_TOUT, idle_sleep=time.sleep):
+        """Queries raw data packet from BT device"""
         import asyncio
         data = None
         def notify_cb(char, val):
@@ -158,17 +162,21 @@ class Device:
                 await asyncio.sleep(.1)
             await dev.stop_notify(BT_RX_CHAR)
 
-        req = threading.Thread(target=lambda: asyncio.run(a_query()))
-        req.start()
-        while req.is_alive():
+        query = threading.Thread(target=lambda: asyncio.run(a_query()))
+        query.start()
+        while query.is_alive():
             idle_sleep(.1)
-        req.join()
+        query.join()
         if not data:
             return None
         return Device.validate_raw_data(data)
 
     @staticmethod
     def validate_raw_data(data):
+        """
+        Validates data packet. Returns either valid packet with
+        header and checksum stripped or None.
+        """
         if data[0] != 0xab or data[1] != 0xcd:
             log.error('bad magic (%#x, %#x)', data[0], data[1])
             return None
@@ -186,7 +194,7 @@ class Device:
 
     def get_value(data):
         """
-        Convert raw data to the floating point value. Here we don't
+        Converts raw data to the floating point value. Here we don't
         care about units since the caller should be aware of them.
         It set mode dial manually after all. So in the mV mode the
         result is expressed in mV rather than volts.
@@ -226,9 +234,11 @@ class Device:
         return 1 if (data[0] == 25) and (data[DATA_LEN-1] & 8) else 0
 
     def __enter__(self):
+        """Context manager protocol support"""
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        """Closes device on exiting 'with' block"""
         self.close()
         return False
 
