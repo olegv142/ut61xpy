@@ -3,13 +3,16 @@ The UNI-T UT61E+ is high precision low cost digital multimeter with optically is
 The UT61B/D+ models are lower cost 6000 count versions sharing the same excellent DC voltage measuring accuracy of 10uV and having some additional features like thermocouple measuring (UT61D+).
 This repository provides simple alternative to vendor data collection program. Since the code is written in python it may be easily incorporated onto your complex measuring or automation system. 
 
-The project is inspired by https://github.com/aroum/unit_ut61eplus_python & https://github.com/ljakob/unit_ut61eplus.
+The project is inspired by https://github.com/ljakob/unit_ut61eplus and https://github.com/aroum/unit_ut61eplus_python.
 The code was reworked with the following goals in mind:
  - keep code as simple as possible
  - ensure seamless working on Windows and Linux
  - create simple cli tool (**ut61xp-get**) for data collection and visualization
  - support dual channel (DC+AC mode of UT61E+) reading and plotting
  - convenient working with several devices simultaneously
+ - support for USB HID and Bluetooth communication channel
+
+The scripts work via USB HID adapter D-09A commonly supplied with UT61X+ multimeter. Alternatively one can use UT-D07B Bluetooth adapter which provides the wireless communication channel at the expense of the lower communication speed. The minimum data readout interval is around 180 msec for USB adapter and around 800 msec for Bluetooth adapter.
 
 ## Installation
 
@@ -101,4 +104,8 @@ Note that to be able to combine measurements made by different devices you will 
 
 The configuration tricks shown above work just because the auto-detected device path becomes part of the configuration saved with *--cfg-save* option. One can check that by looking at the configuration file content saved as text. But what is the device path after all? It turns out that on Windows it contains some unique device identifier but on Linux it depends only on the USB port where the device is attached. So its critically important to use different ports for different devices and always use the same port for the particular device while working with configurations / device paths on Linux.
 
+## Using Bluetooth adapter
 
+Working with Bluetooth adapter conceptually is not different from using USB. Just add *-B/--bt* option right after *ut61xp-get* to force script to use BT adapter. Before running script with this option the *bleak* package should be installed. Execute *pip install bleak* to do it. Please note that you do not need to install *bleak* if you do not intend to use Bluetooth.
+
+Similar to USB use case the script is able to auto detect BT adapter provided that its powered on and no other adapters are in the accessible range. By means of using the *--cfg-save* option one can save the address of the adapter discovered (which plays the role of USB device path) for the subsequent reuse. One can specify BT address in the command line explicitly via *--path/--addr* option. Opening BT device by its address is significantly faster and more reliable than autodetecting it.
