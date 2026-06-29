@@ -53,7 +53,8 @@ class Device:
         try:
             future = asyncio.run_coroutine_threadsafe(co, Device.evloop)
             return future.result()
-        except Exception:
+        except Exception as e:
+            log.debug(e)
             return None
 
     @staticmethod
@@ -78,6 +79,7 @@ class Device:
         self.dev  = dev
         self.path = path
         self.bt   = bt
+        self.bt_last_data = None
 
     @staticmethod
     def hid_open_path(path):
@@ -105,16 +107,26 @@ class Device:
             return None
         return Device.hid_open_path(paths[0])
 
+    def _notify_cb(self, char, val):
+        """BT adapter data changed notification callback"""
+        if len(val) == 3 + DATA_LEN + 2:
+            self.bt_last_data = val
+
     @staticmethod
     def bt_open_addr(addr):
         """Opens BT device given its mac address"""
         from bleak import BleakClient
-        dev = BleakClient(addr)
-        Device._async_exec(dev.connect())
-        if not dev.is_connected:
+        clnt = BleakClient(addr)
+        inst = Device(clnt, addr, True)
+        async def a_connect():
+            await clnt.connect()
+            if clnt.is_connected:
+                await clnt.start_notify(BT_RX_CHAR, inst._notify_cb)
+        Device._async_exec(a_connect())
+        if not clnt.is_connected:
             log.error('failed to connect to device %s', addr)
             return None
-        return Device(dev, addr, True)
+        return inst
 
     @staticmethod
     def bt_open(name=DEF_BT_NAME):
@@ -131,18 +143,17 @@ class Device:
     def query_raw(self, tout=DEF_TOUT, idle_sleep=time.sleep):
         """Reads and validates raw data packet"""
         if not self.bt:
-            return self._hid_query_raw(self.dev, tout, idle_sleep)
+            return self._hid_query_raw(tout, idle_sleep)
         else:
-            return self._bt_query_raw(self.dev, tout, idle_sleep)
+            return self._bt_query_raw(tout, idle_sleep)
 
-    @staticmethod
-    def _hid_query_raw(dev, tout=DEF_TOUT, idle_sleep=time.sleep):
+    def _hid_query_raw(self, tout, idle_sleep):
         """Queries raw data packet from HID device"""
         attempts = int(10 * tout)
-        dev.write([0, len(TRIGGER_CMD)] + TRIGGER_CMD)
+        self.dev.write([0, len(TRIGGER_CMD)] + TRIGGER_CMD)
         while True:
             idle_sleep(.1)
-            buf = dev.read(64)
+            buf = self.dev.read(64)
             if buf:
                 break
             attempts -= 1
@@ -155,32 +166,23 @@ class Device:
             return None
         return Device._validate_raw_data(buf[1:1+data_len])
 
-    @staticmethod
-    def _bt_query_raw(dev, tout=DEF_TOUT, idle_sleep=time.sleep):
+    def _bt_query_raw(self, tout, idle_sleep):
         """Queries raw data packet from BT device"""
-        data = None
-        def notify_cb(char, val):
-            nonlocal data
-            if len(val) == 3 + DATA_LEN + 2:
-                data = val
-
         async def a_query():
             attempts = int(10 * tout)
-            await dev.start_notify(BT_RX_CHAR, notify_cb)
-            await dev.write_gatt_char(BT_TX_CHAR, bytearray(TRIGGER_CMD), response=False)
-            while not data and attempts:
+            self.bt_last_data = None
+            await self.dev.write_gatt_char(BT_TX_CHAR, bytearray(TRIGGER_CMD), response=False)
+            while not self.bt_last_data and attempts:
                 attempts -= 1
                 await asyncio.sleep(.1)
-            await dev.stop_notify(BT_RX_CHAR)
-
         query = threading.Thread(target=lambda: Device._async_exec(a_query()))
         query.start()
         while query.is_alive():
             idle_sleep(.1)
         query.join()
-        if not data:
+        if not self.bt_last_data:
             return None
-        return Device._validate_raw_data(data)
+        return Device._validate_raw_data(self.bt_last_data)
 
     @staticmethod
     def _validate_raw_data(data):
