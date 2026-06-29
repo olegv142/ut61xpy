@@ -68,7 +68,7 @@ class Plotter:
         if chan and self.args.alt_hline:
             for y in self.args.alt_hline:
                 ymin = min(ymin, y)
-                ymax = max(ymax, y)        
+                ymax = max(ymax, y)
         if ymin > 0 and self.args.with_zero:
             vmin = 0
             vmax = ymax * (1 + self.padding)
@@ -114,8 +114,7 @@ def open_device(args):
     """Open HID or BT device"""
     if args.path:
         return BTDevice.open_addr(args.path) if args.bt else HIDDevice.open_path(args.path)
-    else:
-        return BTDevice.open(args.name) if args.bt else HIDDevice.open(args.VID, args.PID)
+    return BTDevice.open(args.name) if args.bt else HIDDevice.open(args.VID, args.PID)
 
 def do_once(args):
     """Read and print single value"""
@@ -141,7 +140,7 @@ def maybe_save_cfg(args, dev_path):
         opts['cfg_save'] = None
         opts['path'] = dev_path
         with open(cfg_save_fname, 'w') as f:
-            f.write(json.dumps(opts))    
+            f.write(json.dumps(opts))
 
 def do_data(args):
     """
@@ -181,8 +180,7 @@ def do_data(args):
                 if errs_left <= 0:
                     log.error('\nno data')
                     return -1
-                else:
-                    continue
+                continue
             else:
                 errs_left = errs_max
             t = ts - start
