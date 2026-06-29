@@ -13,6 +13,7 @@ import hid
 import time
 import logging
 import threading
+import asyncio
 
 log = logging.getLogger('DEV')
 
@@ -27,6 +28,31 @@ TRIGGER_CMD = [0xAB, 0xCD, 0x03, 0x5E, 0x01, 0xD9]
 DATA_LEN    = 14
 
 class Device:
+    evloop = None
+    evloop_thread = None
+
+    @staticmethod
+    def _evloop_work():
+        """Event loop worker routine"""
+        asyncio.set_event_loop(Device.evloop)
+        Device.evloop.run_forever()
+
+    @staticmethod
+    def _evloop_start():
+        """Starts event loop in separate thread to handle BT stuff"""
+        if Device.evloop is not None:
+            return
+        Device.evloop = asyncio.new_event_loop()
+        Device.evloop_thread = threading.Thread(target=Device._evloop_work, daemon=True)
+        Device.evloop_thread.start()
+
+    @staticmethod
+    def _async_exec(co):
+        """Executes given co-routine and returns result"""
+        Device._evloop_start()
+        future = asyncio.run_coroutine_threadsafe(co, Device.evloop)
+        return future.result()
+
     @staticmethod
     def hid_list_paths(vid=DEF_VID, pid=DEF_PID):
         """Returns the list of HID device paths"""
@@ -35,7 +61,6 @@ class Device:
     @staticmethod
     def bt_list_addrs(name=DEF_BT_NAME):
         """Returns the list of BT device addresses"""
-        import asyncio
         addr_list = []
         async def a_list():
             from bleak import BleakScanner
@@ -43,7 +68,7 @@ class Device:
             for d in devices:
                 if d.name == name:
                     addr_list.append(d.address)
-        asyncio.run(a_list())
+        Device._async_exec(a_list())
         return addr_list
 
     def __init__(self, dev, path, bt=False):
@@ -80,7 +105,6 @@ class Device:
     @staticmethod
     def bt_open_addr(addr):
         """Opens BT device given its mac address"""
-        import asyncio
         from bleak import BleakClient
         dev = BleakClient(addr)
         async def a_connect():
@@ -88,7 +112,7 @@ class Device:
                 await dev.connect()
             except Exception:
                 pass
-        asyncio.run(a_connect())
+        Device._async_exec(a_connect())
         if not dev.is_connected:
             return None
         return Device(dev, addr, True)
@@ -108,23 +132,12 @@ class Device:
     def query_raw(self, tout=DEF_TOUT, idle_sleep=time.sleep):
         """Reads and validates raw data packet"""
         if not self.bt:
-            return self.hid_query_raw(self.dev, tout, idle_sleep)
+            return self._hid_query_raw(self.dev, tout, idle_sleep)
         else:
-            return self.bt_query_raw(self.dev, tout, idle_sleep)
-
-    def close(self):
-        """Closes device if its still open"""
-        if self.dev is None:
-            return
-        if not self.bt:
-            self.dev.close()
-        else:
-            import asyncio
-            asyncio.run(self.dev.disconnect())
-        self.dev = None
+            return self._bt_query_raw(self.dev, tout, idle_sleep)
 
     @staticmethod
-    def hid_query_raw(dev, tout=DEF_TOUT, idle_sleep=time.sleep):
+    def _hid_query_raw(dev, tout=DEF_TOUT, idle_sleep=time.sleep):
         """Queries raw data packet from HID device"""
         attempts = int(10 * tout)
         dev.write([0, len(TRIGGER_CMD)] + TRIGGER_CMD)
@@ -141,12 +154,11 @@ class Device:
         if data_len <= 2 or data_len > 63:
             log.error('bad length: %d', data_len)
             return None
-        return Device.validate_raw_data(buf[1:1+data_len])
+        return Device._validate_raw_data(buf[1:1+data_len])
 
     @staticmethod
-    def bt_query_raw(dev, tout=DEF_TOUT, idle_sleep=time.sleep):
+    def _bt_query_raw(dev, tout=DEF_TOUT, idle_sleep=time.sleep):
         """Queries raw data packet from BT device"""
-        import asyncio
         data = None
         def notify_cb(char, val):
             nonlocal data
@@ -162,17 +174,17 @@ class Device:
                 await asyncio.sleep(.1)
             await dev.stop_notify(BT_RX_CHAR)
 
-        query = threading.Thread(target=lambda: asyncio.run(a_query()))
+        query = threading.Thread(target=lambda: Device._async_exec(a_query()))
         query.start()
         while query.is_alive():
             idle_sleep(.1)
         query.join()
         if not data:
             return None
-        return Device.validate_raw_data(data)
+        return Device._validate_raw_data(data)
 
     @staticmethod
-    def validate_raw_data(data):
+    def _validate_raw_data(data):
         """
         Validates data packet. Returns either valid packet with
         header and checksum stripped or None.
@@ -192,6 +204,7 @@ class Device:
             return None
         return data[3:-2]
 
+    @staticmethod
     def get_value(data):
         """
         Converts raw data to the floating point value. Here we don't
@@ -241,6 +254,16 @@ class Device:
         """Closes device on exiting 'with' block"""
         self.close()
         return False
+
+    def close(self):
+        """Closes device if its still open"""
+        if self.dev is None:
+            return
+        if not self.bt:
+            self.dev.close()
+        else:
+            Device._async_exec(self.dev.disconnect())
+        self.dev = None
 
 if __name__ == '__main__':
     # Open device and print raw readings as well as the corresponding floating point value
