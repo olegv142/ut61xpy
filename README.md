@@ -5,7 +5,7 @@ This repository provides simple alternative to vendor data collection program. S
 
 The project is inspired by https://github.com/ljakob/unit_ut61eplus and https://github.com/aroum/unit_ut61eplus_python.
 The code was reworked with the following goals in mind:
- - keep code as simple as possible
+ - keep code as small and simple as possible
  - ensure seamless working on Windows and Linux
  - create simple cli tool (**ut61xp-get**) for data collection and visualization
  - support dual channel (DC+AC mode of UT61E+) reading and plotting

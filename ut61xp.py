@@ -4,7 +4,7 @@ Its inspired by:
  https://github.com/ljakob/unit_ut61eplus
  https://github.com/aroum/unit_ut61eplus_python
 The code was reworked with the following goals in mind:
- - keep code as simple as possible
+ - keep code as small and simple as possible
  - seamless working on Windows and Linux
  - support for USB HID and Bluetooth communication channel
 """
