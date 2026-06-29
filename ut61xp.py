@@ -170,16 +170,19 @@ class Device:
 if __name__ == '__main__':
     # Open device and print raw readings as well as the corresponding floating point value
     try:
-        with Device.hid_open() as dev:
-            last_data = None
-            while True:
-                data = dev.query_raw()
-                if data:
-                    if last_data is None: print()
-                    print(data[0], ''.join([chr(d) for d in data[1:9]]), data[DATA_LEN-1], '[%d] =' % Device.get_channel(data), Device.get_value(data))
-                else:
-                    print('.', end='', flush=True)
-                last_data = data
+        dev = Device.hid_open()
+        if dev:
+            with dev:
+                last_data = None
+                while True:
+                    data = dev.query_raw()
+                    if data:
+                        if last_data is None: print()
+                        print(data[0], ''.join([chr(d) for d in data[1:9]]), data[DATA_LEN-1],
+                            '[%d] =' % Device.get_channel(data), Device.get_value(data))
+                    else:
+                        print('.', end='', flush=True)
+                    last_data = data
     except KeyboardInterrupt:
         pass
 
