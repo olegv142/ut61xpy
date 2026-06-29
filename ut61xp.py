@@ -11,13 +11,16 @@ The code was reworked with the following goals in mind:
 import hid
 import time
 import logging
+import threading
 
 log = logging.getLogger('DEV')
 
+DEF_TOUT = 5
 DEF_VID = 0x1a86
 DEF_PID = 0xe429
 DEF_BT_NAME = 'UT-D07B'
-DEF_TOUT = 2
+BT_TX_CHAR = '49535343-8841-43f4-a8d4-ecbe34729bb3'
+BT_RX_CHAR = '49535343-1e4d-4bd9-ba61-23c647249616'
 
 TRIGGER_CMD = [0xAB, 0xCD, 0x03, 0x5E, 0x01, 0xD9]
 DATA_LEN = 14
@@ -33,13 +36,13 @@ class Device:
         """Returns the list of BT device addresses"""
         import asyncio
         addr_list = []
-        async def a_list(name):
+        async def a_list():
             from bleak import BleakScanner
             devices = await BleakScanner.discover()
             for d in devices:
                 if d.name == name:
                     addr_list.append(d.address)
-        asyncio.run(a_list(name))
+        asyncio.run(a_list())
         return addr_list
 
     def __init__(self, dev, path, bt=False):
@@ -50,6 +53,8 @@ class Device:
     @staticmethod
     def hid_open_path(path):
         """Open device given the path"""
+        if isinstance(path, str):
+            path = path.encode('ascii')
         dev = hid.device()
         try:
             dev.open_path(path)
@@ -71,16 +76,49 @@ class Device:
             return None
         return Device.hid_open_path(paths[0])
 
+    @staticmethod
+    def bt_open_addr(addr):
+        """Open BT device given its mac address"""
+        import asyncio
+        from bleak import BleakClient
+        dev = BleakClient(addr)
+        async def a_connect():
+            try:
+                await dev.connect()
+            except Exception:
+                pass
+        asyncio.run(a_connect())
+        if not dev.is_connected:
+            return None
+        return Device(dev, addr, True)
+
+    @staticmethod
+    def bt_open(name=DEF_BT_NAME):
+        """Open BT device given its name"""
+        addrs = Device.bt_list_addrs(name)
+        if not addrs:
+            log.error('not found')
+            return None
+        if len(addrs) > 1:
+            log.error('%d devices found', len(addrs))
+            return None
+        return Device.bt_open_addr(addrs[0])
+
     def query_raw(self, tout=DEF_TOUT, idle_sleep=time.sleep):
         """Read and validate raw data packet"""
         if not self.bt:
             return self.hid_query_raw(self.dev, tout, idle_sleep)
+        else:
+            return self.bt_query_raw(self.dev, tout, idle_sleep)
 
     def close(self):
         if self.dev is None:
             return
         if not self.bt:
             self.dev.close()
+        else:
+            import asyncio
+            asyncio.run(self.dev.disconnect())
         self.dev = None
 
     @staticmethod
@@ -101,6 +139,33 @@ class Device:
             log.error('bad length: %d', data_len)
             return None
         return Device.validate_raw_data(buf[1:1+data_len])
+
+    @staticmethod
+    def bt_query_raw(dev, tout=DEF_TOUT, idle_sleep=time.sleep):
+        import asyncio
+        data = None
+        def notify_cb(char, val):
+            nonlocal data
+            if len(val) == 3 + DATA_LEN + 2:
+                data = val
+
+        async def a_query():
+            attempts = int(10 * tout)
+            await dev.start_notify(BT_RX_CHAR, notify_cb)
+            await dev.write_gatt_char(BT_TX_CHAR, bytearray(TRIGGER_CMD))
+            while not data and attempts:
+                attempts -= 1
+                await asyncio.sleep(.1)
+            await dev.stop_notify(BT_RX_CHAR)
+
+        req = threading.Thread(target=lambda: asyncio.run(a_query()))
+        req.start()
+        while req.is_alive():
+            idle_sleep(.1)
+        req.join()
+        if not data:
+            return None
+        return Device.validate_raw_data(data)
 
     @staticmethod
     def validate_raw_data(data):
@@ -185,4 +250,3 @@ if __name__ == '__main__':
                     last_data = data
     except KeyboardInterrupt:
         pass
-

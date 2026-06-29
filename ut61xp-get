@@ -111,11 +111,11 @@ def do_list(args):
     return 0
 
 def open_device(args):
-    """Open device by path or VIP/PID"""
+    """Open HID or BT device"""
     if args.path:
-        return Device.hid_open_path(args.path.encode('ascii'))
+        return Device.bt_open_addr(args.path) if args.bt else Device.hid_open_path(args.path)
     else:
-        return Device.hid_open(args.VID, args.PID)
+        return Device.bt_open(args.name) if args.bt else Device.hid_open(args.VID, args.PID)
 
 def do_once(args):
     """Read and print single value"""
@@ -165,14 +165,24 @@ def do_data(args):
     else:
         plotter = None
         sleep_fn = time.sleep
+    errs_max = 1 if not args.bt else 5
+    errs_left = errs_max
     try:
         start = ts = time.time()
         while True:
             # Query data
             data = dev.query_raw(args.tout, sleep_fn)
             if not data:
-                log.error('no data')
-                return -1
+                if args.file and args.progress:
+                    print('~', end='', flush=True)
+                errs_left -= 1
+                if errs_left <= 0:
+                    log.error('no data')
+                    return -1
+                else:
+                    continue
+            else:
+                errs_left = errs_max
             t = ts - start
             val = Device.get_value(data)
             val_chan = Device.get_channel(data)
@@ -203,8 +213,6 @@ def do_data(args):
                 ts += args.interval
             else:
                 ts = now
-    except KeyboardInterrupt:
-        return 0
     finally:
         dev.close()
         if args.file:
@@ -317,7 +325,10 @@ def main():
         data_parser.set_defaults(func = args.func, **opts)
         args = parser.parse_args()
 
-    return args.func(args)
+    try:
+        return args.func(args)
+    except KeyboardInterrupt:
+        return 0
 
 if __name__ == '__main__':
     sys.exit(main())
