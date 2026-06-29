@@ -9,7 +9,7 @@ import math
 import time
 import json
 import argparse
-from ut61xp import *
+from ut61xp import log, DEF_TOUT, DEF_VID, DEF_PID, DEF_BT_NAME, Device, HIDDevice, BTDevice
 from data_stat import StatCollector
 
 class Plotter:
