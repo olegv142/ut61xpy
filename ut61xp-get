@@ -103,19 +103,19 @@ class Plotter:
 
 def do_list(args):
     if not args.bt:
-        for path in Device.hid_list_paths(args.VID, args.PID):
+        for path in HIDDevice.list_paths(args.VID, args.PID):
             print(path.decode('ascii'))
     else:
-        for addr in Device.bt_list_addrs(args.name):
+        for addr in BTDevice.list_addrs(args.name):
             print(addr)
     return 0
 
 def open_device(args):
     """Open HID or BT device"""
     if args.path:
-        return Device.bt_open_addr(args.path) if args.bt else Device.hid_open_path(args.path)
+        return BTDevice.open_addr(args.path) if args.bt else HIDDevice.open_path(args.path)
     else:
-        return Device.bt_open(args.name) if args.bt else Device.hid_open(args.VID, args.PID)
+        return BTDevice.open(args.name) if args.bt else HIDDevice.open(args.VID, args.PID)
 
 def do_once(args):
     """Read and print single value"""

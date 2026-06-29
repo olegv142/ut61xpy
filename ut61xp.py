@@ -14,6 +14,7 @@ import time
 import logging
 import threading
 import asyncio
+from abc import ABC, abstractmethod
 
 log = logging.getLogger('DEV')
 
@@ -27,160 +28,14 @@ BT_RX_CHAR  = '49535343-1e4d-4bd9-ba61-23c647249616'
 TRIGGER_CMD = [0xAB, 0xCD, 0x03, 0x5E, 0x01, 0xD9]
 DATA_LEN    = 14
 
-class Device:
-    evloop = None
-    evloop_thread = None
-
-    @staticmethod
-    def _evloop_work():
-        """Event loop worker routine"""
-        asyncio.set_event_loop(Device.evloop)
-        Device.evloop.run_forever()
-
-    @staticmethod
-    def _evloop_start():
-        """Starts event loop in separate thread to handle BT stuff"""
-        if Device.evloop is not None:
-            return
-        Device.evloop = asyncio.new_event_loop()
-        Device.evloop_thread = threading.Thread(target=Device._evloop_work, daemon=True)
-        Device.evloop_thread.start()
-
-    @staticmethod
-    def _async_exec(co, wait=True):
-        """Executes given co-routine and returns result"""
-        Device._evloop_start()
-        try:
-            future = asyncio.run_coroutine_threadsafe(co, Device.evloop)
-            return future.result() if wait else future
-        except Exception as e:
-            log.debug(e)
-            return None
-
-    @staticmethod
-    def hid_list_paths(vid=DEF_VID, pid=DEF_PID):
-        """Returns the list of HID device paths"""
-        return [dev['path'] for dev in hid.enumerate(vid, pid)]
-
-    @staticmethod
-    def bt_list_addrs(name=DEF_BT_NAME):
-        """Returns the list of BT device addresses"""
-        addr_list = []
-        async def a_list():
-            from bleak import BleakScanner
-            devices = await BleakScanner.discover()
-            for d in devices:
-                if d.name == name:
-                    addr_list.append(d.address)
-        Device._async_exec(a_list())
-        return addr_list
-
-    def __init__(self, dev, path, bt=False):
-        self.dev  = dev
+class Device(ABC):
+    """Base class for all adapters"""
+    def __init__(self, path):
         self.path = path
-        self.bt   = bt
-        self.bt_last_data = None
 
-    @staticmethod
-    def hid_open_path(path):
-        """Opens device given the path"""
-        if isinstance(path, str):
-            path = path.encode('ascii')
-        dev = hid.device()
-        try:
-            dev.open_path(path)
-        except:
-            log.error('failed to open device %s', path)
-            return None
-        dev.set_nonblocking(True)
-        return Device(dev, path.decode('ascii'))
-
-    @staticmethod
-    def hid_open(vid=DEF_VID, pid=DEF_PID):
-        """Opens device given its VID, PID. Returns device, path tuple."""
-        paths = Device.hid_list_paths(vid, pid)
-        if not paths:
-            log.error('not found')
-            return None
-        if len(paths) > 1:
-            log.error('%d devices found', len(paths))
-            return None
-        return Device.hid_open_path(paths[0])
-
-    def _notify_cb(self, char, val):
-        """BT adapter data changed notification callback"""
-        if len(val) == 3 + DATA_LEN + 2:
-            self.bt_last_data = val
-
-    @staticmethod
-    def bt_open_addr(addr):
-        """Opens BT device given its mac address"""
-        from bleak import BleakClient
-        clnt = BleakClient(addr)
-        inst = Device(clnt, addr, True)
-        async def a_connect():
-            await clnt.connect()
-            if clnt.is_connected:
-                await clnt.start_notify(BT_RX_CHAR, inst._notify_cb)
-        Device._async_exec(a_connect())
-        if not clnt.is_connected:
-            log.error('failed to connect to device %s', addr)
-            return None
-        return inst
-
-    @staticmethod
-    def bt_open(name=DEF_BT_NAME):
-        """Opens BT device given its name"""
-        addrs = Device.bt_list_addrs(name)
-        if not addrs:
-            log.error('not found')
-            return None
-        if len(addrs) > 1:
-            log.error('%d devices found', len(addrs))
-            return None
-        return Device.bt_open_addr(addrs[0])
-
+    @abstractmethod
     def query_raw(self, tout=DEF_TOUT, idle_sleep=time.sleep):
-        """Reads and validates raw data packet"""
-        if not self.bt:
-            return self._hid_query_raw(tout, idle_sleep)
-        else:
-            return self._bt_query_raw(tout, idle_sleep)
-
-    def _hid_query_raw(self, tout, idle_sleep):
-        """Queries raw data packet from HID device"""
-        attempts = int(10 * tout)
-        self.dev.write([0, len(TRIGGER_CMD)] + TRIGGER_CMD)
-        while True:
-            idle_sleep(.1)
-            buf = self.dev.read(64)
-            if buf:
-                break
-            attempts -= 1
-            if attempts <= 0:
-                return None
-        # print(' '.join('%02x' % v for v in buf))
-        data_len = buf[0]
-        if data_len <= 2 or data_len > 63:
-            log.error('bad length: %d', data_len)
-            return None
-        return Device._validate_raw_data(buf[1:1+data_len])
-
-    def _bt_query_raw(self, tout, idle_sleep):
-        """Queries raw data packet from BT device"""
-        async def a_query():
-            attempts = int(10 * tout)
-            self.bt_last_data = None
-            await self.dev.write_gatt_char(BT_TX_CHAR, bytearray(TRIGGER_CMD), response=False)
-            while not self.bt_last_data and attempts:
-                attempts -= 1
-                await asyncio.sleep(.1)
-        query = Device._async_exec(a_query(), wait=False)
-        while not query.done():
-            idle_sleep(.1)
-        if not self.bt_last_data:
-            return None
-        return Device._validate_raw_data(self.bt_last_data)
+        pass
 
     @staticmethod
     def _validate_raw_data(data):
@@ -245,6 +100,10 @@ class Device:
         """
         return 1 if (data[0] == 25) and (data[DATA_LEN-1] & 8) else 0
 
+    @abstractmethod
+    def close(self):
+        pass
+
     def __enter__(self):
         """Context manager protocol support"""
         return self
@@ -252,22 +111,179 @@ class Device:
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Closes device on exiting 'with' block"""
         self.close()
-        return False
+
+class HIDDevice(Device):
+    """USB HID adapter (D-09A) interface class"""
+    def __init__(self, dev, path):
+        super().__init__(path)
+        self.dev = dev
+
+    @staticmethod
+    def list_paths(vid=DEF_VID, pid=DEF_PID):
+        """Returns the list of HID device paths"""
+        return [dev['path'] for dev in hid.enumerate(vid, pid)]
+
+    @staticmethod
+    def open_path(path):
+        """Opens device given the path"""
+        if isinstance(path, str):
+            path = path.encode('ascii')
+        dev = hid.device()
+        try:
+            dev.open_path(path)
+        except:
+            log.error('failed to open device %s', path)
+            return None
+        dev.set_nonblocking(True)
+        return HIDDevice(dev, path.decode('ascii'))
+
+    @staticmethod
+    def open(vid=DEF_VID, pid=DEF_PID):
+        """Opens device given its VID, PID. Returns device, path tuple."""
+        paths = HIDDevice.list_paths(vid, pid)
+        if not paths:
+            log.error('not found')
+            return None
+        if len(paths) > 1:
+            log.error('%d devices found', len(paths))
+            return None
+        return HIDDevice.open_path(paths[0])
+
+    def query_raw(self, tout=DEF_TOUT, idle_sleep=time.sleep):
+        """Queries raw data packet from HID device"""
+        attempts = int(10 * tout)
+        self.dev.write([0, len(TRIGGER_CMD)] + TRIGGER_CMD)
+        while True:
+            idle_sleep(.1)
+            buf = self.dev.read(64)
+            if buf:
+                break
+            attempts -= 1
+            if attempts <= 0:
+                return None
+        # print(' '.join('%02x' % v for v in buf))
+        data_len = buf[0]
+        if data_len <= 2 or data_len > 63:
+            log.error('bad length: %d', data_len)
+            return None
+        return Device._validate_raw_data(buf[1:1+data_len])
 
     def close(self):
         """Closes device if its still open"""
         if self.dev is None:
             return
-        if not self.bt:
-            self.dev.close()
-        else:
-            Device._async_exec(self.dev.disconnect())
+        self.dev.close()
+        self.dev = None
+
+class BTDevice(Device):
+    """Bluetooth adapter (UT-D07B) interface class"""
+    evloop = None
+    evloop_thread = None
+
+    def __init__(self, dev, addr):
+        super().__init__(addr)
+        self.dev = dev
+        self.last_data = None
+
+    @staticmethod
+    def _evloop_work():
+        """Event loop worker routine"""
+        asyncio.set_event_loop(BTDevice.evloop)
+        BTDevice.evloop.run_forever()
+
+    @staticmethod
+    def _evloop_start():
+        """Starts event loop in separate thread to handle BT stuff"""
+        if BTDevice.evloop is not None:
+            return
+        BTDevice.evloop = asyncio.new_event_loop()
+        BTDevice.evloop_thread = threading.Thread(target=BTDevice._evloop_work, daemon=True)
+        BTDevice.evloop_thread.start()
+
+    @staticmethod
+    def _async_exec(co, wait=True):
+        """Executes given co-routine and returns result"""
+        BTDevice._evloop_start()
+        try:
+            future = asyncio.run_coroutine_threadsafe(co, BTDevice.evloop)
+            return future.result() if wait else future
+        except Exception as e:
+            log.debug(e)
+            return None
+
+    @staticmethod
+    def list_addrs(name=DEF_BT_NAME):
+        """Returns the list of BT device addresses"""
+        addr_list = []
+        async def a_list():
+            from bleak import BleakScanner
+            devices = await BleakScanner.discover()
+            for d in devices:
+                if d.name == name:
+                    addr_list.append(d.address)
+        BTDevice._async_exec(a_list())
+        return addr_list
+
+    def _notify_cb(self, char, val):
+        """BT adapter data changed notification callback"""
+        if len(val) == 3 + DATA_LEN + 2:
+            self.last_data = val
+
+    @staticmethod
+    def open_addr(addr):
+        """Opens BT device given its mac address"""
+        from bleak import BleakClient
+        clnt = BleakClient(addr)
+        inst = BTDevice(clnt, addr)
+        async def a_connect():
+            await clnt.connect()
+            if clnt.is_connected:
+                await clnt.start_notify(BT_RX_CHAR, inst._notify_cb)
+        BTDevice._async_exec(a_connect())
+        if not clnt.is_connected:
+            log.error('failed to connect to device %s', addr)
+            return None
+        return inst
+
+    @staticmethod
+    def open(name=DEF_BT_NAME):
+        """Opens BT device given its name"""
+        addrs = BTDevice.list_addrs(name)
+        if not addrs:
+            log.error('not found')
+            return None
+        if len(addrs) > 1:
+            log.error('%d devices found', len(addrs))
+            return None
+        return BTDevice.open_addr(addrs[0])
+
+    def query_raw(self, tout=DEF_TOUT, idle_sleep=time.sleep):
+        """Queries raw data packet from BT device"""
+        async def a_query():
+            attempts = int(10 * tout)
+            self.last_data = None
+            await self.dev.write_gatt_char(BT_TX_CHAR, bytearray(TRIGGER_CMD), response=False)
+            while not self.last_data and attempts:
+                attempts -= 1
+                await asyncio.sleep(.1)
+        query = BTDevice._async_exec(a_query(), wait=False)
+        while not query.done():
+            idle_sleep(.1)
+        if not self.last_data:
+            return None
+        return Device._validate_raw_data(self.last_data)
+
+    def close(self):
+        """Closes device if its still open"""
+        if self.dev is None:
+            return
+        BTDevice._async_exec(self.dev.disconnect())
         self.dev = None
 
 if __name__ == '__main__':
     # Open device and print raw readings as well as the corresponding floating point value
     try:
-        dev = Device.hid_open()
+        dev = HIDDevice.open()
         if dev:
             with dev:
                 last_data = None
