@@ -32,7 +32,7 @@ The **ut61xp-get** will auto detect UT-D09A USB adapter provided that there is e
 
 ## Automatic file naming
 
-In case the file with the name provided with *-f* option already exists it will be silently overwritten. Therefore, you will either have to use a different name the next time you run data collection, or move the data file to a different location if you need it later. The **ut61xp-get** tool provides clever alternative - automatic file naming. In case the name given with *-f* option contains % character(s) it will be treated at the template for current date/time formatting as performed by [strftime](https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior) function. Another useful feature is the possibility to add directory part to filename argument. The directory will be automatically created if not yet exists. For example with *-f %Y-%m-%d/%H%M%S.data* option the file with name representing current time will be placed to the directory with the name representing current date.
+In case the file with the name provided with *-f* option already exists it will be silently overwritten. Therefore, you will either have to use a different name the next time you run data collection, or move the data file to a different location if you need it later. The **ut61xp-get** tool offers a convenient alternative: automatic file naming. In case the name given with *-f* option contains % character(s) it will be treated as the template for current date/time formatting as performed by [strftime](https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior) function. Another useful feature is the possibility to add directory part to filename argument. The directory will be automatically created if not yet exists. For example with *-f %Y-%m-%d/%H%M%S.data* option the file with name representing current time will be placed to the directory with the name representing current date.
 
 ## Dual channel mode
 
@@ -60,6 +60,10 @@ With *-s/--stat* the **ut61xp-get data** command will print various collected da
  - the 4th central moment relative to the standard deviation minus 3 (*kurtosis exess*)
 
 The last two metrics may be used to characterize deviations from the mean. The smaller they are the close the values distribution to the standard one with *Gaussian* noise.
+
+## Plotting already collected data
+
+The **ut61xp-get plot** command followed by the list of filenames plots the data sets reading them from the given files. It is just a convenient tool for viewing the collected data without any complex charting features.
 
 ## Getting help
 
