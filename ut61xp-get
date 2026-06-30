@@ -242,6 +242,28 @@ def do_data(args):
                 print('\n--- alternative channel:')
                 stat[1].print()
 
+def do_plot(args):
+    """Just plots input files"""
+    import matplotlib.pyplot as plt
+    for fname in args.input_files:
+        xdata, ydata = [], []
+        with open(fname, 'r') as f:
+            for line in f:
+                xy = line.split()
+                if len(xy) != 2:
+                    continue
+                try:
+                    x, y = float(xy[0]), float(xy[1])
+                except ValueError:
+                    continue
+                xdata.append(x)
+                ydata.append(y)
+        name = os.path.basename(fname)
+        name = os.path.splitext(name)[0]
+        plt.plot(xdata, ydata, label=name)
+    plt.legend()
+    plt.show()
+
 def main():
     parser = argparse.ArgumentParser(
             description='UNI-T UT61E+ data acquisition tool',
@@ -331,6 +353,10 @@ def main():
             help='save command line options to the file with given name')
     data_parser.add_argument('-c', '--cfg-load', type=str, required=False, metavar='FILENAME',
             help='load command line options from the file with given name')
+
+    plot_parser = subparsers.add_parser('plot', help='plot data file(s)')
+    plot_parser.set_defaults(func=do_plot)
+    plot_parser.add_argument('input_files', nargs='+', help='list of input files')
 
     args = parser.parse_args()
 
