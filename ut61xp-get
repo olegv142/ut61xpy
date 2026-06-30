@@ -63,12 +63,9 @@ class Plotter:
 
     def update_ylim(self, chan, ymin, ymax):
         ax = self.ax[chan]
-        if not chan and self.args.hline:
-            for y in self.args.hline:
-                ymin = min(ymin, y)
-                ymax = max(ymax, y)
-        if chan and self.args.alt_hline:
-            for y in self.args.alt_hline:
+        hlines = self.args.hline if not chan else self.args.alt_hline
+        if hlines:
+            for y in hlines:
                 ymin = min(ymin, y)
                 ymax = max(ymax, y)
         if ymin > 0 and self.args.with_zero:
