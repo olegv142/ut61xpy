@@ -188,12 +188,13 @@ def do_data(args):
             val_chan = Device.get_channel(data)
             val_good = not math.isnan(val)
             # Output data
-            if val_chan == 0:
-                if val_good: # apply value transformation
-                    val = (val - args.offset) * args.mult
-                print(out_fmt % (ts if args.epoch else t, args.delimiter, val), file=out_file)
-            elif alt_file:
-                print(out_fmt % (ts if args.epoch else t, args.delimiter, val), file=alt_file)
+            if val_good or args.keep_nan:
+                if val_chan == 0:
+                    if val_good: # apply value transformation
+                        val = (val - args.offset) * args.mult
+                    print(out_fmt % (ts if args.epoch else t, args.delimiter, val), file=out_file)
+                elif alt_file:
+                    print(out_fmt % (ts if args.epoch else t, args.delimiter, val), file=alt_file)
             if args.file and args.progress:
                 # Show progress
                 print('.' if val_good else '!', end='', flush=True)
@@ -273,6 +274,8 @@ def main():
             help='output file name (optional, output to stdout by default)')
     data_parser.add_argument('-a', '--alt-file', type=str, required=False, metavar='FILENAME',
             help='alternative channel output file name (for storing AC voltage in DC mode)')
+    data_parser.add_argument('--keep-nan', action='store_true',
+            help='keep invalid data values (NaN) resulting from overload (optional, discarding them by default)')
     data_parser.add_argument('-p', '--progress', action='store_true',
             help='show progress when writing to file')
     data_parser.add_argument('-o', '--offset', type=float, required=False, metavar='VALUE', default=0,
