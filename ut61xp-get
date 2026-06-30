@@ -4,6 +4,7 @@
 The UNI-T UT61B/D/E+ digital multimeter data acquisition and plotting tool
 """
 
+import os
 import sys
 import math
 import time
@@ -11,6 +12,7 @@ import json
 import argparse
 from ut61xp import log, DEF_TOUT, DEF_VID, DEF_PID, DEF_BT_NAME, Device, HIDDevice, BTDevice
 from data_stat import StatCollector
+from datetime import datetime
 
 class Plotter:
     """Data plotter"""
@@ -142,6 +144,19 @@ def maybe_save_cfg(args, dev_path):
         with open(cfg_save_fname, 'w') as f:
             f.write(json.dumps(opts))
 
+def get_fname(fname_str):
+    """Makes filename from parameter string and makes sure folder part exists"""
+    if not fname_str:
+        return None
+    fname = datetime.now().strftime(fname_str) if '%' in fname_str else fname_str
+    dirname = os.path.dirname(fname)
+    if dirname:
+        try:
+            os.mkdir(dirname)
+        except FileExistsError:
+            pass
+    return fname
+
 def do_data(args):
     """
     Read data continuously and plot them if -g option is present in args.
@@ -153,10 +168,11 @@ def do_data(args):
         return -1
 
     maybe_save_cfg(args, dev.path)
+    fname, alt_fname = get_fname(args.file), get_fname(args.alt_file)
 
     out_fmt = '%.3f%s %f'
-    out_file = sys.stdout if not args.file else open(args.file, 'w')
-    alt_file = None if not args.alt_file else open(args.alt_file, 'w')
+    out_file = sys.stdout if not fname else open(fname, 'w')
+    alt_file = None if not alt_fname else open(alt_fname, 'w')
     stat = [StatCollector(), StatCollector()]
     if args.graph:
         plotter = Plotter(args)
@@ -172,7 +188,7 @@ def do_data(args):
             # Query data
             data = dev.query_raw(args.tout, sleep_fn)
             if not data:
-                if args.file and args.progress:
+                if fname and args.progress:
                     print('~', end='', flush=True)
                 if plotter and plotter.is_closed():
                     return 0
@@ -195,7 +211,7 @@ def do_data(args):
                     print(out_fmt % (ts if args.epoch else t, args.delimiter, val), file=out_file)
                 elif alt_file:
                     print(out_fmt % (ts if args.epoch else t, args.delimiter, val), file=alt_file)
-            if args.file and args.progress:
+            if fname and args.progress:
                 # Show progress
                 print('.' if val_good else '!', end='', flush=True)
             if args.stat:
@@ -216,16 +232,16 @@ def do_data(args):
                 ts = now
     finally:
         dev.close()
-        if args.file:
+        if fname:
             out_file.close()
             if args.progress:
                 print()
-        if args.alt_file:
+        if alt_fname:
             alt_file.close()
         if args.stat:
             print('\n--- data statistics:')
             stat[0].print()
-            if args.alt_file:
+            if alt_fname:
                 print('\n--- alternative channel:')
                 stat[1].print()
 
@@ -271,7 +287,7 @@ def main():
     data_parser.add_argument('-i', '--interval', type=float, required=False, default=1., metavar='SECONDS',
             help='data acquisition interval (default is 1 sec)')
     data_parser.add_argument('-f', '--file', type=str, required=False, metavar='FILENAME',
-            help='output file name (optional, output to stdout by default)')
+            help='output file name (optional, output to stdout by default), may have directory part and/or date time pattern, like %%Y-%%m-%%d/%%H%%M%%S.data')
     data_parser.add_argument('-a', '--alt-file', type=str, required=False, metavar='FILENAME',
             help='alternative channel output file name (for storing AC voltage in DC mode)')
     data_parser.add_argument('--keep-nan', action='store_true',
