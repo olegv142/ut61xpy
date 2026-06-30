@@ -287,7 +287,7 @@ def main():
     data_parser.add_argument('-i', '--interval', type=float, required=False, default=1., metavar='SECONDS',
             help='data acquisition interval (default is 1 sec)')
     data_parser.add_argument('-f', '--file', type=str, required=False, metavar='FILENAME',
-            help='output file name (optional, output to stdout by default), may have directory part and/or date time pattern, like %%Y-%%m-%%d/%%H%%M%%S.data')
+            help='output file (optional, stdout by default), may have folder part and/or date time pattern, like %%Y-%%m-%%d/%%H%%M%%S.data')
     data_parser.add_argument('-a', '--alt-file', type=str, required=False, metavar='FILENAME',
             help='alternative channel output file name (for storing AC voltage in DC mode)')
     data_parser.add_argument('--keep-nan', action='store_true',
