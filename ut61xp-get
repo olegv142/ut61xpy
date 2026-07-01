@@ -43,8 +43,7 @@ class Plotter:
                 self.ax[0].axhline(y, linestyle=args.hline_style, color=args.hline_color)
 
         self.x_data, self.y_data = [[] for _ in range(nchan)], [[] for _ in range(nchan)]
-        self.line = [self.ax[i].plot(
-                self.x_data[i], self.y_data[i],
+        self.line = [self.ax[i].plot([], [],
                 linestyle=args.line_style,
                 color=(args.line_color, args.alt_line_color)[i]
             )[0] for i in range(nchan)]
@@ -80,15 +79,16 @@ class Plotter:
             vmax = ymax + vrange * self.padding
         ax.set_ylim(vmin, vmax)
 
-    def update(self, t, val, chan):
+    def update(self, t, data, val, chan):
         if not math.isnan(val) and chan < len(self.ax):
+            axis = self.ax[chan]
             self.vmin[chan] = min(self.vmin[chan], val)
             self.vmax[chan] = max(self.vmax[chan], val)
             wnd = self.args.wnd
             xdata, ydata = self.x_data[chan], self.y_data[chan]
             xdata.append(t)
             ydata.append(val)
-            pan_zoom = self.ax[chan].get_navigate_mode() is not None
+            pan_zoom = axis.get_navigate_mode() is not None
             while wnd and not pan_zoom and len(xdata) > wnd:
                 xdata.pop(0)
                 ydata.pop(0)
@@ -97,6 +97,10 @@ class Plotter:
                 if not chan:
                     self.update_xlim(chan, xdata[0], xdata[-1])
                 self.update_ylim(chan, *((min(ydata), max(ydata)) if wnd else (self.vmin[chan], self.vmax[chan])))
+            if not (self.args.plot_title, self.args.alt_title)[chan]:
+                mode = Device.get_mode(data)
+                if axis.get_title() != mode:
+                    axis.set_title(mode)
         self.fig.canvas.flush_events()
         self.plt.show()
 
@@ -218,7 +222,7 @@ def do_data(args):
                 if plotter.is_closed():
                     return 0
                 # Update plot
-                plotter.update(t, val, val_chan)
+                plotter.update(t, data, val, val_chan)
             # Introduce delay according to acquisition interval
             now = time.time()
             elapsed = now - ts

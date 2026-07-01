@@ -100,6 +100,41 @@ class Device(ABC):
         """
         return 1 if (data[0] == 25) and (data[DATA_LEN-1] & 8) else 0
 
+    mode_map = [
+        {
+            0  : 'ac V',
+            1  : 'ac mV',
+            2  : 'dc V',
+            3  : 'dc mV',
+            4  : 'Hz',
+            5  : 'pw %',
+            6  : 'Ohm',
+            7  : 'Ohm',
+            8  : 'diode V',
+            9  : 'nF',
+            10 : '°C',
+            11 : '°F',
+            12 : 'dc uA',
+            13 : 'ac uA',
+            14 : 'dc mA',
+            15 : 'ac mA',
+            16 : 'dc A',
+            17 : 'ac A',
+            18 : 'hFE',
+            20 : 'NCV',
+            21 : 'ac V LoZ',
+            24 : 'ac V LPF',
+            25 : 'dc V',
+        }, {
+            25 : 'ac V',
+        }
+    ]
+
+    @staticmethod
+    def get_mode(data):
+        """Returns measurement mode and units description string"""
+        return Device.mode_map[Device.get_channel(data)].get(data[0])
+
     @abstractmethod
     def close(self):
         pass
