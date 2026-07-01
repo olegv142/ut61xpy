@@ -20,7 +20,7 @@ The scripts work via USB HID adapter D-09A commonly supplied with UT61X+ multime
 git clone https://github.com/olegv142/ut61xpy.git
 ```
 
-To use this code you will need *hidapi* package. Use *pip install hidapi* to install it.
+Alternatively you can download source code archive and unpack it. To use this code you will need *hidapi* package. Use *pip install hidapi* to install it.
 
 To use graph plotting options of **ut61xp-get** data acquisition tool you will need *matplotlib* package. Use *pip install matplotlib* to install it. The tool may be executed without *matplotlib* package installed unless you use *-g* (show data graph) option.
 
