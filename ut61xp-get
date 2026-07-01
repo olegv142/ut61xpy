@@ -261,7 +261,10 @@ def do_plot(args):
         name = os.path.basename(fname)
         name = os.path.splitext(name)[0]
         plt.plot(xdata, ydata, label=name)
-    plt.legend()
+    if len(args.input_files) == 1:
+        plt.title(args.input_files[0])
+    else:
+        plt.legend()
     plt.show()
 
 def main():
