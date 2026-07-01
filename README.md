@@ -96,13 +96,13 @@ The corresponding configuration will be saved to ut61d.cfg
 3. Now we can connect both devices and run some acquisition in parallel (in separate terminals):
 ```
 python ut61xpy/ut61xp-get data -c ut61d.cfg -i 0
-python ut61xpy/ut61xp-get data -c ut61e.cfg -a a.data --plot-title DC --alt-title AC
+python ut61xpy/ut61xp-get data -c ut61e.cfg -a a.data
 ```
 The first command will read data from UT61D+ at maximum rate. The second command will acquire data from UT61E+ in DC+AC mode.
 
 4. One can even create specialized configuration file for DC+AC mode by modifying basic configuration:
 ```
-python ut61xpy/ut61xp-get data -c ut61e.cfg -a a.data --plot-title DC --alt-title AC --cfg-save acdc.cfg
+python ut61xpy/ut61xp-get data -c ut61e.cfg -a a.data --cfg-save acdc.cfg
 ```
 Now one can just execute the following short command line to use DC+AC readout with dual plot graph:
 ```
