@@ -145,6 +145,10 @@ def maybe_save_cfg(args, dev_path):
         with open(cfg_save_fname, 'w') as f:
             f.write(json.dumps(opts))
 
+def update_measuring_defaults(args):
+    if args.interval is None:
+        args.interval = 1 if not args.alt_file else 0
+
 def get_fname(fname_str):
     """Makes filename from parameter string and makes sure folder part exists"""
     if not fname_str:
@@ -169,8 +173,8 @@ def do_data(args):
         return -1
 
     maybe_save_cfg(args, dev.path)
+    update_measuring_defaults(args)
     fname, alt_fname = get_fname(args.file), get_fname(args.alt_file)
-
     out_fmt = '%.3f%s %f'
     out_file = sys.stdout if not fname else open(fname, 'w')
     alt_file = None if not alt_fname else open(alt_fname, 'w')
@@ -310,7 +314,7 @@ def main():
         )
     data_parser.set_defaults(func=do_data)
 
-    data_parser.add_argument('-i', '--interval', type=float, required=False, default=1., metavar='SECONDS',
+    data_parser.add_argument('-i', '--interval', type=float, required=False, default=None, metavar='SECONDS',
             help='data acquisition interval (default is 1 sec)')
     data_parser.add_argument('-f', '--file', type=str, required=False, metavar='FILENAME',
             help='output file (optional, stdout by default), may have folder part and/or date time pattern, like %%Y-%%m-%%d/%%H%%M%%S.data')
