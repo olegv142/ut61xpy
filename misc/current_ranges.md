@@ -36,3 +36,7 @@
 | [manual]    |                   | 2000 / .1 µA        | 100 Ohm           | $\color{blue}{\text{200}}$ |
 |             |                   | 200 / .01 mA        | 1 Ohm             | $\color{blue}{\text{200}}$ |
 |             |                   | 20 / .001 A         | .01 Ohm           |                            |
+| ProsKit     | 100 mV            | 50 µA               | 1.9 kOhm          | $\color{green}{\text{95}}$ |
+| MT-2018     |                   | 2.5 mA              | 100 Ohm           | $\color{blue}{\text{250}}$ |
+| [analog]    |                   | 25 mA               | 10 Ohm            | $\color{blue}{\text{250}}$ |
+|             |                   | 250 mA              | 1 Ohm             | $\color{blue}{\text{250}}$ |
