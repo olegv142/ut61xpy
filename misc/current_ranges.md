@@ -17,6 +17,12 @@
 |             |                 | 22 / .001 mA   | 5 Ohm            | $\color{blue}{\text{110 / .005}}$  |
 |             |                 | 220 / .01 mA   | 5 Ohm            | $\color{red}{\text{1100 / .05}}$   |
 |             |                 | 20 / .001 A    | .01 Ohm          |                                    |
+| ZOYI ZT-Y   | 10 / .001 mV    | 100 / .01 µA   | 100 Ohm          | $\color{green}{\text{10 / .001}}$  |
+| [EBTN]      |                 | 1000 / .1 µA   | 100 Ohm          | $\color{green}{\text{100 / .01}}$  |
+|             |                 | 10 / .001 mA   | 2 Ohm            | $\color{green}{\text{20 / .002}}$  |
+|             |                 | 100 / .01 mA   | 2 Ohm            | $\color{blue}{\text{200 / .02}}$   |
+|             |                 | 1 / .0001 A    | .01 Ohm          |                                    |
+|             |                 | 10 / .001 A    | .01 Ohm          |                                    |
 | UT890PRO    | 600 / .1 mV     | 60 / .01 µA    | 10 kOhm          | $\color{red}{\text{600 / .1}}$     |
 | [manual]    |                 | 600 / .1 µA    | 1 kOhm           | $\color{red}{\text{600 / .1}}$     |
 |             |                 | 6 / .001 mA    | 100 Ohm          | $\color{red}{\text{600 / .1}}$     |
