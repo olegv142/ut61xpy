@@ -23,6 +23,12 @@
 |             |                 | 100 / .01 mA   | 2 Ohm            | $\color{blue}{\text{200 / .02}}$   |
 |             |                 | 1 / .0001 A    | .01 Ohm          |                                    |
 |             |                 | 10 / .001 A    | .01 Ohm          |                                    |
+| OWON        | 55 / .001 mV    | 500 / .01 µA   | 100 Ohm          | $\color{green}{\text{50 / .001}}$  |
+| XDM1241     |                 | 5 / .0001 mA   | 100 Ohm          | $\color{red}{\text{500 / .01}}$    |
+| [benchtop]  |                 | 50 / .001 mA   | 2 Ohm            | $\color{green}{\text{100 / .002}}$ |
+|             |                 | 500 / .01 mA   | 2 Ohm            | $\color{red}{\text{1000 / .02}}$   |
+|             |                 | 5 / .0001 A    | .01 Ohm          |                                    |
+|             |                 | 10 / .001 A    | .01 Ohm          |                                    |
 | UT890PRO    | 600 / .1 mV     | 60 / .01 µA    | 10 kOhm          | $\color{red}{\text{600 / .1}}$     |
 | [manual]    |                 | 600 / .1 µA    | 1 kOhm           | $\color{red}{\text{600 / .1}}$     |
 |             |                 | 6 / .001 mA    | 100 Ohm          | $\color{red}{\text{600 / .1}}$     |
