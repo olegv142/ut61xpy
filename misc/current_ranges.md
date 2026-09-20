@@ -46,3 +46,8 @@
 | MT-2018     |                 | 2.5 mA         | 100 Ohm          | $\color{blue}{\text{250}}$         |
 | [analog]    |                 | 25 mA          | 10 Ohm           | $\color{blue}{\text{250}}$         |
 |             |                 | 250 mA         | 1 Ohm            | $\color{blue}{\text{250}}$         |
+| Victor      | 100 mV          | 50 µA          | 2 kOhm           | $\color{green}{\text{100}}$        |
+| VC-3021     |                 | 2.5 mA         | 72 Ohm           | $\color{blue}{\text{180}}$         |
+| [analog]    |                 | 25 mA          | 7.2 Ohm          | $\color{blue}{\text{180}}$         |
+|             |                 | 250 mA         | .72 Ohm          | $\color{blue}{\text{180}}$         |
+|             |                 | 10 A           | .01 Ohm          |                                    |
