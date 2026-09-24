@@ -17,17 +17,17 @@
 | [USB]       |                 | 22 / .001 mA   | 5 Ohm            | $\color{blue}{\text{110 / .005}}$  |
 |             |                 | 220 / .01 mA   | 5 Ohm            | $\color{red}{\text{1100 / .05}}$   |
 |             |                 | 20 / .001 A    | .01 Ohm          |                                    |
-| OWON        | 20 / .001 mV    | 200 / .01 µA   | 100 Ohm          | $\color{green}{\text{20 / .001}}$  |
-| OW18E       |                 | 2000 / .1 µA   | 100 Ohm          | $\color{blue}{\text{200 / .01}}$   |
-| [BT]        |                 | 20 / .001 mA   | 1 Ohm            | $\color{green}{\text{20 / .001}}$  |
-|             |                 | 200 / .01 mA   | 1 Ohm            | $\color{blue}{\text{200 / .01}}$   |
-|             |                 | 20 / .001 A    | .01 Ohm          |                                    |
 | ZOYI        | 10 / .001 mV    | 100 / .01 µA   | 100 Ohm          | $\color{green}{\text{10 / .001}}$  |
 | ZT-Y        |                 | 1000 / .1 µA   | 100 Ohm          | $\color{green}{\text{100 / .01}}$  |
 | [EBTN]      |                 | 10 / .001 mA   | 1 Ohm            | $\color{green}{\text{10 / .001}}$  |
 |             |                 | 100 / .01 mA   | 1 Ohm            | $\color{green}{\text{100 / .01}}$  |
 |             |                 | 1 / .0001 A    | .01 Ohm          |                                    |
 |             |                 | 10 / .001 A    | .01 Ohm          |                                    |
+| OWON        | 20 / .001 mV    | 200 / .01 µA   | 100 Ohm          | $\color{green}{\text{20 / .001}}$  |
+| OW18E       |                 | 2000 / .1 µA   | 100 Ohm          | $\color{blue}{\text{200 / .01}}$   |
+| [BT]        |                 | 20 / .001 mA   | 1 Ohm            | $\color{green}{\text{20 / .001}}$  |
+|             |                 | 200 / .01 mA   | 1 Ohm            | $\color{blue}{\text{200 / .01}}$   |
+|             |                 | 20 / .001 A    | .01 Ohm          |                                    |
 | OWON        | 55 / .001 mV    | 500 / .01 µA   | 100 Ohm          | $\color{green}{\text{50 / .001}}$  |
 | XDM1241     |                 | 5 / .0001 mA   | 100 Ohm          | $\color{red}{\text{500 / .01}}$    |
 | [benchtop]  |                 | 50 / .001 mA   | 1 Ohm            | $\color{green}{\text{50 / .001}}$  |
