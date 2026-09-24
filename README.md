@@ -23,11 +23,12 @@ The tool works via USB HID adapter D-09A commonly supplied with UT61X+ multimete
 
 ### OWON Bluetooth multimeters
 The tool supports the number of Bluetooth multimeters using the same 'BDM' protocol. In particular its tested with the following devices:
-- The CM2100B clamp meter is inexpensive and quite versatile device with 20000 counts capable of measuring AC or DC current without any electrical contact.
 - The B41T+ is a multimeter with 22000 counts and built-in Bluetooth. However, it is relatively expensive and has a number of disadvantages, including poor display quality and high power consumption when Bluetooth is enabled.
-- The OW18B is a cheap, low resolution model with built in Bluetooth. However, it has better display and lower power consumption than B41T+.
+- The OW18E is the most recent 20000 counts model with 1µV resolution. Its better than B41T+ in every respect. It has better display, very low power consumption (1.5mA with BT turned on) and has nice protective rubber sleeve. But at the same time it has one very unpleasant 'feature' - dead band from -5µV to +5µV where input voltage always reads as zero.
+- The OW18B is a cheap, low resolution model in OW18 family with built in Bluetooth. It also has better display and lower power consumption than B41T+.
+- The CM2100B clamp meter is inexpensive and quite versatile device with 20000 counts capable of measuring AC or DC current without any electrical contact. Note though that while measuring by the clamp it delivers 2000 counts only.
 
-Other compatible OWON multimeters like B35T+ and OW18E should work with this tool as well.
+Other compatible OWON multimeters like B35T+ should work with this tool as well.
 
 ### OWON desktop multimeters
 OWON produces a line of desktop multimeters that use the SCPI communication protocol via USB connection. The tool is tested with XDM1241 model. This is a 55000 count multimeter with 1µV resolution. Its fast on paper but may be painfully slow in practice especially in capacitance mode. The SCPI command set implemented by this device is very basic. However, it significantly outperforms any handheld multimeter in its voltage and current measurement capabilities, thanks to its excellent 1 µV resolution and relays that switch shunt resistors depending on the current measurement range selected. Other similar models like XDM1041 should work with this tool as well.
