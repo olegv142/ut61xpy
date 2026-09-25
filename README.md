@@ -518,3 +518,20 @@ if dmm:
 if el:
     el.close()
 ```
+
+## Which multimeter is better and why
+
+### Why measuring current is the most problematic task
+
+### Why 6000 counts is not enough for the current
+
+### Best models
+1. OWON XDM1241 is the best budget DMM with some reservations. It not quite portable, slow and has almost unusable capacitance measuring mode. Choose it if you don't need portability, long battery life and don't bother measuring capacitance under 1nF.
+2. OWON OW18E is the best portable DMM with only one serious drawback - the dead band from -5µV to +5µV where input voltage always reads as zero. Choose it if you need portability, long battery life and can tolerate dead band. Note that fortunately there are no dead bands in current ranges.
+
+### Not so good models
+1. All 6000 count modes are not very good at current measurements since you will have only 60 counts in the worst case.
+2. The popular UT61E+ is bad for current measurements due to the combination of the two factors:
+ - high shunt resistance - 5 Ohm in mA mode (vs 1 Ohm for most other models) which will force you to choose A mode
+ - dead band in A mode from -5mA to +5mA
+3. UT60BT is absolute outsider due to PTC fuse which increases its resistance in mA mode up to 3.3kOhm.
