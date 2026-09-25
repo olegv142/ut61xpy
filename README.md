@@ -520,18 +520,24 @@ if el:
 ```
 
 ## Which multimeter is better and why
+If you don't need exceptional precision, then all multimeters with 6000 counts and more will give you reasonably good results in any mode except for the current measuring.
 
 ### Why measuring current is the most problematic task
+The multimeter does not measure current directly. It does measure voltage across current sensing resistor aka *shunt*. This voltage is effectively subtracted from the voltage in the net where you are measuring current. Suppose you are interesting in the current being consumed by microcontroller powered from 3.3V. If the voltage across the shunt is 0.5V then only 2.7V is left for microcontroller. This may affect it seriously reducing the current or even prevent microcontroller from working normally. Therefore, it is generally not desirable for the shunt voltage to exceed 100mV, which can be considered safe and should keep the current disturbance level at 3% (0.1/3.3). In practice many multimeters have full scale voltage across their shunts larger than that. For convenience I have made a [table](https://github.com/olegv142/ut61xpy/blob/main/misc/current_ranges.md) listing shunt resistance and full scale voltage for various multimeters including ones without PC interface, with manual ranges and even old analog multimeters with moving physical needle as display device.
 
-### Why 6000 counts is not enough for the current
+### Why 6000 counts is not enough for the current measuring
+
+
+### Why 1µV resolution is necessary for current measuring
 
 ### Best models
 1. OWON XDM1241 is the best budget DMM with some reservations. It not quite portable, slow and has almost unusable capacitance measuring mode. Choose it if you don't need portability, long battery life and don't bother measuring capacitance under 1nF.
-2. OWON OW18E is the best portable DMM with only one serious drawback - the dead band from -5µV to +5µV where input voltage always reads as zero. Choose it if you need portability, long battery life and can tolerate dead band. Note that fortunately there are no dead bands in current ranges.
+2. OWON OW18E is the best portable DMM with only one serious drawback - the dead band from -5µV to +5µV where input voltage always reads as zero. Choose it if you need portability, long battery life and can tolerate dead band. Note that fortunately there are no dead bands in its current ranges.
 
 ### Not so good models
-1. All 6000 count modes are not very good at current measurements since you will have only 60 counts in the worst case.
-2. The popular UT61E+ is bad for current measurements due to the combination of the two factors:
+1. All 6000 count models are not very good at current measurements since you will have only 60 counts in the worst case.
+2. The popular UT61E+ is bad for current measurements due to the combination of several factors:
+ - 5µV shunt voltage measuring resolution gives you only 200 counts with 100mV shunt voltage in the worst case.
  - high shunt resistance - 5 Ohm in mA mode (vs 1 Ohm for most other models) which will force you to choose A mode
  - dead band in A mode from -5mA to +5mA
 3. UT60BT is absolute outsider due to PTC fuse which increases its resistance in mA mode up to 3.3kOhm.
