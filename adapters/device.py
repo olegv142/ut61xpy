@@ -61,7 +61,7 @@ class Device:
 
     def get_channels(self, data: Any) -> int:
         """
-        Get the number of channels contained in the raw data. In there there are more than 1 channel
+        Get the number of channels contained in the raw data. If there are more than 1 channel
         its index should be passed explicitly to get_value and get_mode method. Otherwise
         the channel number may be retrieved by get_channel method.
         """

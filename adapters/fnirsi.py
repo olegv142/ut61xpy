@@ -248,7 +248,7 @@ if __name__ == '__main__':
     if dev := devT.open():
         print(dev)
         with dev:
-            dev.init(1)
+            dev.init(2)
             while dev.is_connected():
                 data = dev.query_raw()
                 print(dev.get_value(data, 0), dev.get_mode(data, 0), dev.get_value(data, 1), dev.get_mode(data, 1))
