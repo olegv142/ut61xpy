@@ -82,6 +82,10 @@ class INA226Device(Device):
     VOLT_LSB = 1.25e-3
     SHUNT_RES = .1
 
+    def set_shunt_resistance(self, shunt_res: float):
+        """Set shunt resistance in Ohms"""
+        self.SHUNT_RES = shunt_res
+
     def set_param(self, key: str, val: str) -> bool:
         """
         Set device specific parameter.
@@ -89,7 +93,7 @@ class INA226Device(Device):
         """
         try:
             if key.lower() == 'shunt':
-                self.SHUNT_RES = float(val)
+                self.set_shunt_resistance(float(val))
                 return True
         except Exception as e:
             log.debug(e, exc_info=True)
