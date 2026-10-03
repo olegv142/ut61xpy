@@ -33,7 +33,7 @@ def async_exec(co, wait=True):
         future = asyncio.run_coroutine_threadsafe(co, evloop)
         return future.result() if wait else future
     except Exception as e:
-        log.debug(e)
+        log.debug(e, exc_info=True)
         return None
 
 def name_matches(devname, name):

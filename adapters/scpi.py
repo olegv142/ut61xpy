@@ -46,7 +46,7 @@ class SCPIDevice(CDCMixin, Device):
             self.dev.write(cmd + self.EOL_SYMBOL)
         except Exception as e:
             self.disconnected = True
-            log.debug(e)
+            log.debug(e, exc_info=True)
 
     def scpi_receive(self, tout=None, idle_sleep=time.sleep):
         wait = tout if tout is not None else self.DEF_READ_TOUT
@@ -57,7 +57,7 @@ class SCPIDevice(CDCMixin, Device):
                 rd = self.dev.read(64)
             except Exception as e:
                 self.disconnected = True
-                log.debug(e)
+                log.debug(e, exc_info=True)
                 return None
             if rd:
                 resp += rd

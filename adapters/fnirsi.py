@@ -55,7 +55,7 @@ class FnirsiUsbDevice(HIDMixin, Device):
             time.sleep(self.CMD_INTERVAL)
         except Exception as e:
             self.disconnected = True
-            log.debug(e)
+            log.debug(e, exc_info=True)
 
     def get_channels(self, data):
         """Get the number of channels contained in the raw data"""
@@ -78,7 +78,7 @@ class FnirsiUsbDevice(HIDMixin, Device):
                     return None
         except Exception as e:
             self.disconnected = True
-            log.debug(e)
+            log.debug(e, exc_info=True)
             return None
         return bytes(buf[2:])
 

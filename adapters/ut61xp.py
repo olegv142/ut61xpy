@@ -194,7 +194,7 @@ class UTUsbDevice(HIDMixin, UTDevice):
                     return None
         except Exception as e:
             self.disconnected = True
-            log.debug(e)
+            log.debug(e, exc_info=True)
             return None
         data_len = buf[0]
         if data_len <= 2 or data_len > 63:
