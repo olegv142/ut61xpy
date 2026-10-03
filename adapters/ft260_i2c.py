@@ -29,16 +29,21 @@ def i2c_query_status(dev):
     sta = dev.get_feature_report(0xC0, 61)
     return sta[1]
 
-def i2c_write(dev, address: int, data: list[int], flag: int = FL_START_STOP):
+def i2c_write(dev,
+        address: int, data: list[int],
+        flag: int = FL_START_STOP
+    ):
     assert 0 < len(data) <= 60
     report_id = 0xD0 + (len(data) - 1) // 4
     payload = [report_id, address, flag, len(data)] + data
     dev.write(payload)
 
 def i2c_read(dev,
-        address: int, length: int, flag: int = FL_START_STOP,
-        tout: float|None = None, idle_sleep: Callable[[float], None] = time.sleep
-    ):
+        address: int, length: int,
+        flag: int = FL_START_STOP,
+        tout: float|None = None,
+        idle_sleep: Callable[[float], None] = time.sleep
+    ) -> list[int]|None:
     assert 0 < length <= 60
     wait = tout if tout is not None else DEF_TOUT
     while True: # wait device ready
@@ -65,8 +70,12 @@ def i2c_read(dev,
             log.error('timeout reading addr %#x', address)
             return None
 
+    if len(report) < 2 + length:
+        log.error('bad packet length reading addr %#x: expects %u, got %u',
+            address, length + 2, len(report))
     if length != report[1]:
-        log.error('bad length reading addr %#x: expects %u, got %u', address, length, report[1])
+        log.error('bad data length reading addr %#x: expects %u, got %u',
+            address, length, report[1])
         return None
     sta = i2c_query_status(dev)
     if sta & (STA_BUSY | STA_ERROR):
