@@ -35,9 +35,11 @@ def i2c_init(dev):
 def read_packet(dev):
     wait = READ_TOUT
     delay = MIN_DELAY
-    while wait >= 0:
+    while True:
         if pkt := dev.read(64):
             return pkt
+        if wait <= 0:
+            break
         time.sleep(delay)
         wait -= delay
         delay *= 2
@@ -50,10 +52,12 @@ def i2c_query_status(dev) -> int:
 def i2c_wait_idle(dev) -> int:
     wait = BUSY_TOUT
     delay = MIN_DELAY
-    while wait >= 0:
+    while True:
         sta = i2c_query_status(dev)
         if not (sta & STA_BUSY):
             return sta & ~STA_IDLE
+        if wait <= 0:
+            break
         time.sleep(delay)
         wait -= delay
         delay *= 2
