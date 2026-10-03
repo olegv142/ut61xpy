@@ -53,15 +53,11 @@ class I2CHIDMixin(HIDMixin):
         """Initialize I2C bus"""
         raise NotImplementedError()
 
-    def i2c_write(self, addr: int, data: list[int]):
+    def i2c_write(self, addr: int, data: list[int]) -> bool:
         """Write data bytes to I2C given target address"""
         raise NotImplementedError()
 
-    def i2c_read(self,
-            addr: int, length: int,
-            tout: float|None = None,
-            idle_sleep: Callable[[float], None] = time.sleep
-    ) -> list[int]|None:
+    def i2c_read(self, addr: int, length: int) -> list[int]|None:
         """Read data bytes from I2C given target address"""
         raise NotImplementedError()
 
@@ -73,16 +69,11 @@ class FT260Mixin(I2CHIDMixin):
     def i2c_init(self):
         ft260.i2c_init(self.dev)
 
-    def i2c_write(self, addr: int, data: list[int]):
-        ft260.i2c_write(self.dev, addr, data)
+    def i2c_write(self, addr: int, data: list[int]) -> bool:
+        return ft260.i2c_write(self.dev, addr, data)
 
-    def i2c_read(self,
-            addr: int, length: int,
-            tout: float|None = None,
-            idle_sleep: Callable[[float], None] = time.sleep
-    ) -> list[int]|None:
-        return ft260.i2c_read(self.dev, addr, length,
-            tout=tout, idle_sleep=idle_sleep)
+    def i2c_read(self, addr: int, length: int) -> list[int]|None:
+        return ft260.i2c_read(self.dev, addr, length)
 
 class INA226Device(Device):
     """INA226 16bit current and voltage monitor base class"""
@@ -91,23 +82,28 @@ class INA226Device(Device):
     VOLT_LSB = 1.25e-3
     SHUNT_RES = .1
 
-    def get_mode(self, data, channel=0):
+    def get_mode(self, data, channel=0) -> str:
         """Returns measurement mode and units description string"""
         if not data:
             return ''
         return ('A', 'V')[channel]
 
-    def query_raw(self, tout=None, idle_sleep=time.sleep):
+    def query_raw(self, tout=None, idle_sleep=time.sleep) -> Any|None:
+        """
+        Query raw data from device. Here we ignore timeout and idle callback args since
+        I2C HID adapter normally responds without long waiting. Therefore calling callback
+        here will just slow down readout without any benefits.
+        """
         try:
-            self.i2c_write(self.I2C_ADDR, [1]) # set target register address
-            idata = self.i2c_read(self.I2C_ADDR, 2, tout = tout, idle_sleep = idle_sleep)
-            if idata is None:
+            if not self.i2c_write(self.I2C_ADDR, [1]): # set target register address
+                return None
+            if (idata := self.i2c_read(self.I2C_ADDR, 2)) is None:
                 return None
             if self.channels < 2:
                 return (bytes(idata),)
-            self.i2c_write(self.I2C_ADDR, [2]) # set target register address
-            vdata = self.i2c_read(self.I2C_ADDR, 2, tout = tout, idle_sleep = idle_sleep)
-            if vdata is None:
+            if not self.i2c_write(self.I2C_ADDR, [2]): # set target register address
+                return None
+            if (vdata := self.i2c_read(self.I2C_ADDR, 2)) is None:
                 return None
             return (bytes(idata), bytes(vdata))
         except Exception as e:
@@ -115,7 +111,7 @@ class INA226Device(Device):
             log.debug(e, exc_info=True)
             return None        
 
-    def get_value(self, data, channel=0):
+    def get_value(self, data, channel=0) -> float:
         """Converts raw data to the floating point value"""
         if not data:
             return Device.INVALID_VALUE
