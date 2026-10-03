@@ -82,6 +82,19 @@ class INA226Device(Device):
     VOLT_LSB = 1.25e-3
     SHUNT_RES = .1
 
+    def set_param(self, key: str, val: str) -> bool:
+        """
+        Set device specific parameter.
+        Returns True if key / val pair is recognized, False otherwise.
+        """
+        try:
+            if key.lower() == 'shunt':
+                self.SHUNT_RES = float(val)
+                return True
+        except Exception as e:
+            log.debug(e, exc_info=True)
+        return False
+
     def get_mode(self, data, channel=0) -> str:
         """Returns measurement mode and units description string"""
         if not data:

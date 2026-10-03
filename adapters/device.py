@@ -49,6 +49,13 @@ class Device:
         """Subclasses may redefine this method to indicate disconnection"""
         return True
 
+    def set_param(self, key: str, val: str) -> bool:
+        """
+        Set device specific parameter.
+        Returns True if key / val pair is recognized, False otherwise.
+        """
+        return False
+
     def init(self, nchannels: int = 1):
         """
         Initialize device setting the number of channels we are going to read.

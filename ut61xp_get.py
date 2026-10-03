@@ -223,23 +223,34 @@ def device_type(args):
     T = _device_type(args.bt, args.model)
     if T is not None:
         return T
-    assert args.model is not None
-    T = _device_type(args.bt)
-    assert T is not None
-    log.warning('model %s is not supported in %s mode, using default %s',
-            args.model, 'BT' if args.bt else 'USB', T.MODEL_NAME
+    log.error('model %s is not supported in %s mode',
+            args.model, 'BT' if args.bt else 'USB'
         )
-    return T
+    return None
 
 def open_device(args):
     """Open USB or BT device"""
     T = device_type(args)
+    if T is None:
+        return None
     if args.path:
         dev = T.open_addr(args.path) if T.IsBT else T.open_path(args.path)
     else:
         dev = T.open(args.name) if T.IsBT else T.open(args.VID, args.PID)
-    if dev:
-        log.info('%s %s at %s', dev, 'open' if args.path else 'found', dev.path)
+    if dev is None:
+        return None
+    log.info('%s %s at %s', dev, 'open' if args.path else 'found', dev.path)
+    if args.param:
+        for param in args.param:
+            kv = param.split('=')
+            if len(kv) != 2:
+                log.error('bad param: %s', param)
+                dev.close()
+                return None
+            if not dev.set_param(*kv):
+                log.error('unrecognized param: %s', param)
+                dev.close()
+                return None
     return dev
 
 def do_list(args):
@@ -571,6 +582,9 @@ def main_impl(argv=None):
             help='device model (optional, default is %s)' % (UTDevice.MODEL_NAME))
     parser.add_argument('--name', type=str, required=False, default=None,
             help='set Bluetooth adapter name (optional)')
+    parser.add_argument('--param', type=str, metavar='KEY=VAL', action='append',
+            help='optional model specific parameter (may be used multiple times)')
+    parser.add_argument('--verbose', action='store_true', help='verbose output')
     parser.add_argument('--exit-prompt', action='store_true',
             help='wait Enter on exit')
 
@@ -673,6 +687,9 @@ def main_impl(argv=None):
             help='data delimiter on output (optional, space by default)')
 
     args = parser.parse_args(argv)
+
+    if args.verbose:
+        log.setLevel(logging.DEBUG)
 
     cfg_load_fname = getattr(args, 'cfg_load', None)
     if cfg_load_fname:
