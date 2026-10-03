@@ -13,7 +13,7 @@ from collections.abc import Callable
 if __package__: sys.path.append(os.path.realpath(os.path.dirname(__file__)))
 
 from device import Device, HIDMixin
-import ft260_i2c as ft260
+import ft260
 
 log = logging.getLogger('DEV')
 
