@@ -204,6 +204,8 @@ class Plotter:
                     axis.set_title(mode)
             if self.args.plot_stat:
                 self.show_stat(axis, self.stat[chan])
+
+    def refresh(self):
         self.fig.canvas.flush_events()
         self.plt.show()
 
@@ -392,6 +394,8 @@ def do_data(args):
                         return 0
                     # Update plot
                     plotter.update(t, data, val, val_chan)
+            if plotter:
+                plotter.refresh()
             if fname and args.progress:
                 # Show progress
                 print('.' if val_good else '!', end='', file=sys.stderr, flush=True)
