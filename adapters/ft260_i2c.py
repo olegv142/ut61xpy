@@ -4,6 +4,7 @@ FTDI FT260 adapter I2C communication routines
 
 import time
 import logging
+from collections.abc import Callable
 log = logging.getLogger('DEV')
 
 DEVICE_VID = 0x403

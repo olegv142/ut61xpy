@@ -8,6 +8,7 @@ import time
 import logging
 import struct
 from typing import Any
+from collections.abc import Callable
 
 if __package__: sys.path.append(os.path.realpath(os.path.dirname(__file__)))
 
