@@ -39,8 +39,10 @@ TEXT_ENTRY_WIDTH = len(DEF_ALT_FNAME) + 1
 VERT_PAD         = 1
 HORIZ_PAD        = 8
 
-FONT_SIZE = 10
-SMALL_FONT_SIZE = 9
+TIGHT = '--tight' in sys.argv[1:]
+
+FONT_SIZE       = 8 if TIGHT else 10
+SMALL_FONT_SIZE = 6 if TIGHT else 9
 
 class LauncherEvent(Enum):
     Created       = 0
