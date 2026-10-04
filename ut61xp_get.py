@@ -247,7 +247,7 @@ def open_device(args):
                 log.error('bad param: %s', param)
                 dev.close()
                 return None
-            if not dev.set_param(*kv):
+            if not dev.set_param(kv[0].strip(), kv[1].strip()):
                 log.error('unrecognized param: %s', param)
                 dev.close()
                 return None
