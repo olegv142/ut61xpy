@@ -50,12 +50,22 @@ class Device:
         """Subclasses may redefine this method to indicate disconnection"""
         return True
 
-    def set_param(self, key: str, val: str) -> bool:
+    def set_param(self, key: str, val: str|float) -> bool:
         """
         Set device specific parameter.
         Returns True if key / val pair is recognized, False otherwise.
         """
+        try:
+            if key.lower() == 'tout':
+                self.set_tout(float(val))
+                return True
+        except Exception as e:
+            log.debug(e, exc_info=True)
         return False
+
+    def set_tout(self, tout_sec: float):
+        """Set data readout timeout in seconds"""
+        self.TOUT = tout_sec
 
     def init(self, nchannels: int = 1):
         """

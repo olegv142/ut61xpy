@@ -87,7 +87,7 @@ class INA226Device(Device):
         """Set shunt resistance in Ohms"""
         self.SHUNT_RES = shunt_res
 
-    def set_param(self, key: str, val: str) -> bool:
+    def set_param(self, key: str, val: str|float) -> bool:
         """
         Set device specific parameter.
         Returns True if key / val pair is recognized, False otherwise.
@@ -98,7 +98,7 @@ class INA226Device(Device):
                 return True
         except Exception as e:
             log.debug(e, exc_info=True)
-        return False
+        return Device.set_param(self, key, val)
 
     def get_mode(self, data, channel=0) -> str:
         """Returns measurement mode and units description string"""
