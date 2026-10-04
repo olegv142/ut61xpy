@@ -177,10 +177,12 @@ class UTUsbDevice(HIDMixin, UTDevice):
         self.disconnected = False
 
     def is_connected(self):
-        return self.dev and not self.disconnected
+        return not self.disconnected
 
     def query_raw(self, idle_sleep=time.sleep):
         """Queries raw data packet from HID device"""
+        if not self.is_connected():
+            return None
         wait = self.TOUT
         try:
             self.dev.write([0, len(self.TRIGGER_CMD)] + self.TRIGGER_CMD)
@@ -207,6 +209,7 @@ class UTUsbDevice(HIDMixin, UTDevice):
         if self.dev is None:
             return
         self.dev.close()
+        self.disconnected = True
         self.dev = None
 
 class UTBtDevice(BTMixin, UTDevice):
@@ -222,7 +225,7 @@ class UTBtDevice(BTMixin, UTDevice):
         self.last_data = None
 
     def is_connected(self):
-        return self.dev.is_connected
+        return self.dev and self.dev.is_connected
 
     def _notify_cb(self, char, val):
         """BT adapter data changed notification callback"""
@@ -247,6 +250,8 @@ class UTBtDevice(BTMixin, UTDevice):
 
     def query_raw(self, idle_sleep=time.sleep):
         """Queries raw data packet from BT device"""
+        if not self.is_connected():
+            return None
         wait = self.TOUT
         self.last_data = None
         async def a_trigger():

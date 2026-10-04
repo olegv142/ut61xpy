@@ -37,7 +37,7 @@ class FnirsiUsbDevice(HIDMixin, Device):
         self.disconnected = False
 
     def is_connected(self):
-        return self.dev and not self.disconnected
+        return not self.disconnected
 
     def send_cmd(self, cmd):
         self.dev.write([0] + cmd)
@@ -65,6 +65,8 @@ class FnirsiUsbDevice(HIDMixin, Device):
 
     def query_raw(self, idle_sleep=time.sleep):
         """Queries raw data packet from HID device"""
+        if not self.is_connected():
+            return None
         wait = self.TOUT
         try:
             self.send_cmd(self.CMD_POLL)
@@ -104,6 +106,7 @@ class FnirsiUsbDevice(HIDMixin, Device):
         if self.dev is None:
             return
         self.dev.close()
+        self.disconnected = True
         self.dev = None
 
 
@@ -127,7 +130,7 @@ class FnirsiBtDevice(BTMixin, Device):
         self.last_data = None
 
     def is_connected(self):
-        return self.dev.is_connected
+        return self.dev and self.dev.is_connected
 
     def init(self, nchannels=1):
         """
@@ -181,7 +184,7 @@ class FnirsiBtDevice(BTMixin, Device):
 
     def query_raw(self, idle_sleep=time.sleep):
         """Queries raw data packet from BT device"""
-        if not self.dev.is_connected:
+        if not self.is_connected():
             return None
         wait = self.TOUT
         while self.last_data is None and wait >= 0:

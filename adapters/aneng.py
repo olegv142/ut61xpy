@@ -64,7 +64,7 @@ class AnengBtDevice(BTMixin, Device):
         self.last_data = None
 
     def is_connected(self):
-        return self.dev.is_connected
+        return self.dev and self.dev.is_connected
 
     def _notify_cb(self, char, val):
         """BT adapter data changed notification callback"""
@@ -89,7 +89,7 @@ class AnengBtDevice(BTMixin, Device):
 
     def query_raw(self, idle_sleep=time.sleep):
         """Queries raw data packet from BT device"""
-        if not self.dev.is_connected:
+        if not self.is_connected():
             return None
         wait = self.TOUT
         while self.last_data is None and wait >= 0:

@@ -39,7 +39,7 @@ class SCPIDevice(CDCMixin, Device):
             return self.MODEL_NAME
 
     def is_connected(self):
-        return self.dev and not self.disconnected
+        return not self.disconnected
 
     def scpi_send(self, cmd):
         try:
@@ -85,6 +85,7 @@ class SCPIDevice(CDCMixin, Device):
         if self.dev is None:
             return
         self.dev.close()
+        self.disconnected = True
         self.dev = None
 
 class SCPIDmm(SCPIDevice):
@@ -115,6 +116,8 @@ class SCPIDmm(SCPIDevice):
 
     def query_raw(self, idle_sleep=time.sleep):
         """Queries raw data from device"""
+        if not self.is_connected():
+            return None
         resp = self.scpi_call(b'MEAS?', idle_sleep)
         if not resp:
             return None
@@ -172,6 +175,8 @@ class SCPIPowerSource(SCPIDevice):
 
     def query_raw(self, idle_sleep=time.sleep):
         """Queries raw data from device"""
+        if not self.is_connected():
+            return None
         if self.channels < 2:
             resp = self.scpi_call(b'MEAS:CURR?', idle_sleep)
             return (resp,) if resp else None

@@ -26,7 +26,7 @@ class I2CHIDMixin(HIDMixin):
         self.disconnected = False
 
     def is_connected(self) -> bool:
-        return self.dev and not self.disconnected
+        return not self.disconnected
 
     def init(self, nchannels=1):
         """
@@ -47,6 +47,7 @@ class I2CHIDMixin(HIDMixin):
         if self.dev is None:
             return
         self.dev.close()
+        self.disconnected = True
         self.dev = None
 
     def i2c_init(self):
@@ -111,6 +112,8 @@ class INA226Device(Device):
         I2C HID adapter normally responds without long waiting. Therefore calling callback
         here will just slow down readout without any benefits.
         """
+        if not self.is_connected():
+            return None
         try:
             if not self.i2c_write(self.I2C_ADDR, [1]): # set target register address
                 return None
