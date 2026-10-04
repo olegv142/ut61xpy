@@ -27,7 +27,7 @@ class AnengBtDevice(BTMixin, Device):
     DEVICE_NAME = 'Bluetooth DMM'
     BT_RX_CHAR  = 'FFF4'
     DATA_LEN    = 11 # data response packet length
-    DEF_TOUT    = 4  # default timeout in seconds
+    TOUT        = 4  # default timeout in seconds
     DATA_PREFIX = [0x5a, 0xa5, 0x3]
     XOR_KEY     = [0x41, 0x21, 0x73, 0x55, 0xa2, 0xc1, 0x32, 0x71, 0x66, 0xaa, 0x3b]
     IDLE_DELAY  = .1
@@ -87,11 +87,11 @@ class AnengBtDevice(BTMixin, Device):
             return None
         return inst
 
-    def query_raw(self, tout=None, idle_sleep=time.sleep):
+    def query_raw(self, idle_sleep=time.sleep):
         """Queries raw data packet from BT device"""
         if not self.dev.is_connected:
             return None
-        wait = tout if tout is not None else self.DEF_TOUT
+        wait = self.TOUT
         while self.last_data is None and wait >= 0:
             idle_sleep(self.IDLE_DELAY)
             wait -= self.IDLE_DELAY

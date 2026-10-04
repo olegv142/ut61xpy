@@ -36,6 +36,7 @@ class Device:
 
     # The following property should be redefined in subclasses
     MODEL_NAME: str = None
+    TOUT = None # default timeout should be specified in subclasses
     INVALID_VALUE: float = float('nan')
 
     def __init__(self, path: str):
@@ -62,7 +63,7 @@ class Device:
         Should be called before the first query_raw call.
         """
 
-    def query_raw(self, tout: float|None, idle_sleep: Callable[[float], None] = time.sleep) -> Any|None:
+    def query_raw(self, idle_sleep: Callable[[float], None] = time.sleep) -> Any|None:
         """Reads raw data packet from device and returns it. Returns None to indicate failure."""
         raise NotImplementedError()
 

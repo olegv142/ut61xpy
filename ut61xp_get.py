@@ -269,7 +269,7 @@ def do_once(args):
     if dev is None:
         return -1
     try:
-        data = dev.query_raw(args.tout)
+        data = dev.query_raw()
         if not data:
             log.error('\n%s returns no data', dev)
             return -1
@@ -363,7 +363,7 @@ def do_data(args):
         start = ts = time.time()
         while True:
             # Query data
-            data = dev.query_raw(args.tout, sleep_fn)
+            data = dev.query_raw(sleep_fn)
             if not data:
                 if not dev.is_connected():
                     log.error('\n%s disconnected', dev)
@@ -574,8 +574,6 @@ def main_impl(argv=None):
             help='device product id (optional)')
     parser.add_argument('--path', '--addr', type=str, required=False,
             help='device path or Bluetooth mac address (optional, auto detect by default)')
-    parser.add_argument('--tout', type=float, required=False, default=None, metavar='SECONDS',
-            help='device read timeout (optional)')
     parser.add_argument('-B', '--bt', action='store_true',
             help='use Bluetooth for communicating with device')
     parser.add_argument('-M', '--model', type=str, required=False, metavar='NAME', default=None,

@@ -105,7 +105,7 @@ class INA226Device(Device):
             return ''
         return ('A', 'V')[channel]
 
-    def query_raw(self, tout=None, idle_sleep=time.sleep) -> Any|None:
+    def query_raw(self, idle_sleep=time.sleep) -> Any|None:
         """
         Query raw data from device. Here we ignore timeout and idle callback args since
         I2C HID adapter normally responds without long waiting. Therefore calling callback

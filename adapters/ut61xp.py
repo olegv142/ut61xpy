@@ -30,7 +30,6 @@ class UTDevice(Device):
     # It should be sent to the device to trigger data response
     TRIGGER_CMD = [0xAB, 0xCD, 0x03, 0x5E, 0x01, 0xD9]
     DATA_LEN    = 14 # data response packet length
-    DEF_TOUT    = 4  # default timeout in seconds
 
     def _validate_raw_data(self, data):
         """
@@ -169,6 +168,7 @@ class UTUsbDevice(HIDMixin, UTDevice):
     """USB HID adapter (D-09A) interface class"""
     DEVICE_VID = 0x1a86
     DEVICE_PID = 0xe429
+    TOUT       = 1  # default timeout in seconds
     IDLE_DELAY = .1
 
     def __init__(self, dev, path):
@@ -179,9 +179,9 @@ class UTUsbDevice(HIDMixin, UTDevice):
     def is_connected(self):
         return self.dev and not self.disconnected
 
-    def query_raw(self, tout=None, idle_sleep=time.sleep):
+    def query_raw(self, idle_sleep=time.sleep):
         """Queries raw data packet from HID device"""
-        wait = tout if tout is not None else self.DEF_TOUT
+        wait = self.TOUT
         try:
             self.dev.write([0, len(self.TRIGGER_CMD)] + self.TRIGGER_CMD)
             while True:
@@ -213,6 +213,7 @@ class UTBtDevice(BTMixin, UTDevice):
     """Bluetooth adapter (UT-D07B) interface class"""
     BT_TX_CHAR  = '49535343-8841-43f4-a8d4-ecbe34729bb3'
     BT_RX_CHAR  = '49535343-1e4d-4bd9-ba61-23c647249616'
+    TOUT        = 4  # default timeout in seconds
     IDLE_DELAY  = .1
 
     def __init__(self, dev, addr):
@@ -244,9 +245,9 @@ class UTBtDevice(BTMixin, UTDevice):
             return None
         return inst
 
-    def query_raw(self, tout=None, idle_sleep=time.sleep):
+    def query_raw(self, idle_sleep=time.sleep):
         """Queries raw data packet from BT device"""
-        wait = tout if tout is not None else self.DEF_TOUT
+        wait = self.TOUT
         self.last_data = None
         async def a_trigger():
             await self.dev.write_gatt_char(self.BT_TX_CHAR, bytearray(self.TRIGGER_CMD), response=False)

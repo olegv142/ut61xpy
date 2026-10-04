@@ -20,7 +20,7 @@ class OwonBtDevice(BTMixin, Device):
     DEVICE_NAME = 'BDM'
     BT_RX_CHAR  = 'FFF4'
     DATA_LEN    = 6 # data response packet length
-    DEF_TOUT    = 4 # default timeout in seconds
+    TOUT        = 4 # default timeout in seconds
     IDLE_DELAY  = .1
 
     def __init__(self, dev, addr):
@@ -52,11 +52,11 @@ class OwonBtDevice(BTMixin, Device):
             return None
         return inst
 
-    def query_raw(self, tout=None, idle_sleep=time.sleep):
+    def query_raw(self, idle_sleep=time.sleep):
         """Queries raw data packet from BT device"""
         if not self.dev.is_connected:
             return None
-        wait = tout if tout is not None else self.DEF_TOUT
+        wait = self.TOUT
         while self.last_data is None and wait >= 0:
             idle_sleep(self.IDLE_DELAY)
             wait -= self.IDLE_DELAY

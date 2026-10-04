@@ -24,7 +24,7 @@ class FnirsiUsbDevice(HIDMixin, Device):
 
     CMD_INTERVAL = 0.05
     IDLE_DELAY   = 0.05
-    DEF_TOUT     = 4  # default timeout in seconds
+    TOUT         = 1  # default timeout in seconds
 
     # Channel names for convenience
     CURR_CHAN = 0
@@ -63,9 +63,9 @@ class FnirsiUsbDevice(HIDMixin, Device):
             return 0
         return self.channels
 
-    def query_raw(self, tout=None, idle_sleep=time.sleep):
+    def query_raw(self, idle_sleep=time.sleep):
         """Queries raw data packet from HID device"""
-        wait = tout if tout is not None else self.DEF_TOUT
+        wait = self.TOUT
         try:
             self.send_cmd(self.CMD_POLL)
             while True:
@@ -114,7 +114,7 @@ class FnirsiBtDevice(BTMixin, Device):
     CMD_INIT   = [0xaa, 0x81, 0, 0xf4]
     CMD_START  = [0xaa, 0x82, 0, 0xa7]
     IDLE_DELAY = .1
-    DEF_TOUT   = 4  # default timeout in seconds
+    TOUT       = 4  # default timeout in seconds
 
     # Channel names for convenience
     CURR_CHAN = 0
@@ -179,11 +179,11 @@ class FnirsiBtDevice(BTMixin, Device):
             return None
         return inst
 
-    def query_raw(self, tout=None, idle_sleep=time.sleep):
+    def query_raw(self, idle_sleep=time.sleep):
         """Queries raw data packet from BT device"""
         if not self.dev.is_connected:
             return None
-        wait = tout if tout is not None else self.DEF_TOUT
+        wait = self.TOUT
         while self.last_data is None and wait >= 0:
             idle_sleep(self.IDLE_DELAY)
             wait -= self.IDLE_DELAY

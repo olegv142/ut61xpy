@@ -17,7 +17,7 @@ log = logging.getLogger('DEV')
 
 class SCPIDevice(CDCMixin, Device):
     """Base class for adapters using SCPI commands over CDC link"""
-    DEF_READ_TOUT = 1
+    TOUT = 1
     EOL_SYMBOL = b'\n'
     IDLE_DELAY = .01
 
@@ -48,8 +48,8 @@ class SCPIDevice(CDCMixin, Device):
             self.disconnected = True
             log.debug(e, exc_info=True)
 
-    def scpi_receive(self, tout=None, idle_sleep=time.sleep):
-        wait = tout if tout is not None else self.DEF_READ_TOUT
+    def scpi_receive(self, idle_sleep=time.sleep):
+        wait = self.TOUT
         resp = bytes()
         while True:
             idle_sleep(self.IDLE_DELAY)
@@ -67,12 +67,12 @@ class SCPIDevice(CDCMixin, Device):
             if wait <= 0:
                 return None
 
-    def scpi_call(self, cmd, tout=None, idle_sleep=time.sleep):
+    def scpi_call(self, cmd, idle_sleep=time.sleep):
         self.scpi_send(cmd)
-        return self.scpi_receive(tout, idle_sleep)
+        return self.scpi_receive(idle_sleep)
 
-    def scpi_query(self, cmd, tout=None, idle_sleep=time.sleep):
-        sval = self.scpi_call(cmd, tout, idle_sleep)
+    def scpi_query(self, cmd, idle_sleep=time.sleep):
+        sval = self.scpi_call(cmd, idle_sleep)
         if not sval:
             return None
         try:
@@ -113,14 +113,14 @@ class SCPIDmm(SCPIDevice):
         funcs = [self.scpi_call(b'FUNC%d?' % (i+1)) for i in range(nchannels)]
         self.modes = [f.decode('ascii') if f and f != self.NO_VALUE else self.DEF_MODE for f in funcs]
 
-    def query_raw(self, tout=None, idle_sleep=time.sleep):
+    def query_raw(self, idle_sleep=time.sleep):
         """Queries raw data from device"""
-        resp = self.scpi_call(b'MEAS?', tout, idle_sleep)
+        resp = self.scpi_call(b'MEAS?', idle_sleep)
         if not resp:
             return None
         vals = resp.split(b',')
         if len(vals) < self.channels:
-            if val2 := self.scpi_call(b'MEAS2?', tout, idle_sleep):
+            if val2 := self.scpi_call(b'MEAS2?', idle_sleep):
                 vals.append(val2)
         return vals
 
@@ -170,12 +170,12 @@ class SCPIPowerSource(SCPIDevice):
         assert nchannels in (1, 2)
         self.channels = nchannels
 
-    def query_raw(self, tout=None, idle_sleep=time.sleep):
+    def query_raw(self, idle_sleep=time.sleep):
         """Queries raw data from device"""
         if self.channels < 2:
-            resp = self.scpi_call(b'MEAS:CURR?', tout, idle_sleep)
+            resp = self.scpi_call(b'MEAS:CURR?', idle_sleep)
             return (resp,) if resp else None
-        resp = self.scpi_call(b'MEAS:ALL?', tout, idle_sleep)
+        resp = self.scpi_call(b'MEAS:ALL?', idle_sleep)
         if not resp:
             return None
         return tuple(reversed(resp.split(b',')[:2]))
