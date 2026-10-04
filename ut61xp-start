@@ -422,8 +422,10 @@ class Launcher:
         self.root = tk.Tk()
         self.root.title('Data acquisition launcher')
         self.root.iconphoto(True, tk.PhotoImage(file=module_dir + '/misc/meter.png'))
-        tkfont.nametofont('TkDefaultFont').configure(family='Arial', size=FONT_SIZE)
+        default_font = tkfont.nametofont('TkDefaultFont')
+        default_font.configure(family='Arial', size=FONT_SIZE)
         tkfont.nametofont('TkFixedFont').configure(family='Consolas', size=FONT_SIZE)
+        self.root.option_add("*Font", default_font)
         self.cur_row = -1
         self.conn = None
         self.curr_evt = None
