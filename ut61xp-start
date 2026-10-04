@@ -78,6 +78,10 @@ class Setting(ABC):
         """Returns its own configuration as dictionary"""
         return {}
 
+    def is_global_option(self):
+        """Global options are inserted at the beginning of the argument list"""
+        return False
+
 class DummyOption(Setting):
     """Option with no functionality other than perhaps visual appearance"""
     def notify(self, event):
@@ -198,12 +202,13 @@ class FileNameOptionWithChkbox(FileNameOption):
 
 class TextOption(Setting):
     """Text option with validator"""
-    def __init__(self, launcher, option, text, validator=None):
+    def __init__(self, launcher, option, text, validator=None, is_global=False):
         self.launcher = launcher
         self.opt = option
         self.key = option.replace('-', '_')
         self.val = tk.StringVar()
         self.validator = validator
+        self.is_global = is_global
         label = ttk.Label(self.launcher.settings_frame, text=text)
         self.launcher.pack_control(label, 0)
         entry = ttk.Entry(self.launcher.settings_frame, textvariable=self.val, width=TEXT_ENTRY_WIDTH, font='TkFixedFont')
@@ -225,6 +230,9 @@ class TextOption(Setting):
                 self.launcher.show_warning(('value %s is invalid for --' % val) + self.opt)
                 return None
         return ['--' + self.opt, val]
+
+    def is_global_option(self):
+        return self.is_global
 
     def notify(self, event):
         if event == LauncherEvent.Changed:
@@ -447,6 +455,7 @@ class Launcher:
                 'alternative channel output filename or template', 'actual alternative channel output filename'),
 
             NonNegativeRealNumberOption(self, 'interval', 'data acquisition interval in seconds'),
+            ValueListOption(self, 'param', 'device parameters as KEY=VAL, ...', is_global=True),
             RealNumberOption(self, 'offset', 'data offset on output'),
             RealNumberOption(self, 'mult', 'data multiplier on output'),
             TextOption(self, 'delimiter', 'data delimiter in output file'),
@@ -558,7 +567,10 @@ class Launcher:
             if se_opts is None:
                 opts = None
                 break
-            opts += se_opts
+            if se.is_global_option():
+                opts = se_opts + opts
+            else:
+                opts += se_opts
         log.debug('collect_opts: %s', opts)
         return opts
 
