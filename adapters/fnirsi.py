@@ -111,13 +111,9 @@ class FnirsiBtDevice(BTMixin, Device):
     VOLT_CHAN = 1
 
     def __init__(self, dev, addr):
-        Device.__init__(self, addr)
-        self.dev = dev
+        BTMixin.__init__(self, dev, addr)
         self.channels = None
         self.last_data = None
-
-    def is_connected(self):
-        return self.dev and self.dev.is_connected
 
     def init(self, nchannels=1):
         """

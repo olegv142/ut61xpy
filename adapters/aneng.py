@@ -59,12 +59,8 @@ class AnengBtDevice(BTMixin, Device):
     }
 
     def __init__(self, dev, addr):
-        Device.__init__(self, addr)
-        self.dev = dev
+        BTMixin.__init__(self, dev, addr)
         self.last_data = None
-
-    def is_connected(self):
-        return self.dev and self.dev.is_connected
 
     def _notify_cb(self, char, val):
         """BT adapter data changed notification callback"""

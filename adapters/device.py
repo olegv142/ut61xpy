@@ -242,6 +242,14 @@ class BTMixin:
     # Default BT device name should be defined in subclasses
     DEVICE_NAME: str = None
 
+    def __init__(self, dev: Any, addr: str):
+        Device.__init__(self, addr)
+        self.dev = dev
+
+    def is_connected(self) -> bool:
+        """Returns True if device is connected, False otherwise"""
+        return self.dev and self.dev.is_connected
+
     @classmethod
     def list_addrs(cls, name: str|None = None) -> list[str]:
         """Returns the list of BT device addresses"""
