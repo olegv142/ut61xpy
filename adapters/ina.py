@@ -19,14 +19,9 @@ log = logging.getLogger('DEV')
 
 class I2CHIDMixin(HIDMixin):
     """The base class for I2C HID adapters"""
-    def __init__(self, dev: Any, path: str):
-        Device.__init__(self, path)
-        self.dev = dev
+    def __init__(self, dev, path):
+        HIDMixin.__init__(self, dev, path)
         self.channels = None
-        self.disconnected = False
-
-    def is_connected(self) -> bool:
-        return not self.disconnected
 
     def init(self, nchannels=1):
         """
@@ -41,14 +36,6 @@ class I2CHIDMixin(HIDMixin):
         if not data:
             return 0
         return self.channels
-
-    def close(self):
-        """Closes device if its still open"""
-        if self.dev is None:
-            return
-        self.dev.close()
-        self.disconnected = True
-        self.dev = None
 
     def i2c_init(self):
         """Initialize I2C bus"""

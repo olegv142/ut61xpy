@@ -130,7 +130,21 @@ class USBMixin:
 
     def __init__(self, dev: Any, path: str):
         """Constructor, called by open_path"""
-        raise NotImplementedError()
+        Device.__init__(self, path)
+        self.dev = dev
+        self.disconnected = False
+
+    def is_connected(self) -> bool:
+        """Returns True if device is connected, False otherwise"""
+        return not self.disconnected
+
+    def close(self):
+        """Closes device if its still open"""
+        if self.dev is None:
+            return
+        self.dev.close()
+        self.disconnected = True
+        self.dev = None
 
     @classmethod
     def list_paths(cls, vid: int|None = None, pid: int|None = None) -> list[str]:

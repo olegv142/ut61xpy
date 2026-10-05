@@ -22,9 +22,7 @@ class SCPIDevice(CDCMixin, Device):
     IDLE_DELAY = .01
 
     def __init__(self, dev, path):
-        Device.__init__(self, path)
-        self.dev = dev
-        self.disconnected = False
+        CDCMixin.__init__(self, dev, path)
         self.model = None
 
     def get_model(self):
@@ -37,9 +35,6 @@ class SCPIDevice(CDCMixin, Device):
         else:
             self.disconnected = True
             return self.MODEL_NAME
-
-    def is_connected(self):
-        return not self.disconnected
 
     def scpi_send(self, cmd):
         try:
@@ -79,14 +74,6 @@ class SCPIDevice(CDCMixin, Device):
             return float(sval)
         except ValueError:
             return Device.INVALID_VALUE
-
-    def close(self):
-        """Closes device if its still open"""
-        if self.dev is None:
-            return
-        self.dev.close()
-        self.disconnected = True
-        self.dev = None
 
 class SCPIDmm(SCPIDevice):
     """SCPI multimeter interface adapter. Tested with OWON XDM1241."""

@@ -31,13 +31,8 @@ class FnirsiUsbDevice(HIDMixin, Device):
     VOLT_CHAN = 1
 
     def __init__(self, dev, path):
-        Device.__init__(self, path)
-        self.dev = dev
+        HIDMixin.__init__(self, dev, path)
         self.channels = None
-        self.disconnected = False
-
-    def is_connected(self):
-        return not self.disconnected
 
     def send_cmd(self, cmd):
         self.dev.write([0] + cmd)
@@ -100,14 +95,6 @@ class FnirsiUsbDevice(HIDMixin, Device):
         if not data:
             return ''
         return ('A', 'V')[channel]
-
-    def close(self):
-        """Closes device if its still open"""
-        if self.dev is None:
-            return
-        self.dev.close()
-        self.disconnected = True
-        self.dev = None
 
 
 class FnirsiBtDevice(BTMixin, Device):

@@ -171,14 +171,6 @@ class UTUsbDevice(HIDMixin, UTDevice):
     TOUT       = 1  # default timeout in seconds
     IDLE_DELAY = .1
 
-    def __init__(self, dev, path):
-        UTDevice.__init__(self, path)
-        self.dev = dev
-        self.disconnected = False
-
-    def is_connected(self):
-        return not self.disconnected
-
     def query_raw(self, idle_sleep=time.sleep):
         """Queries raw data packet from HID device"""
         if not self.is_connected():
@@ -203,14 +195,6 @@ class UTUsbDevice(HIDMixin, UTDevice):
             log.error('%s bad HID message length: %d', self, data_len)
             return None
         return self._validate_raw_data(buf[1:1+data_len])
-
-    def close(self):
-        """Closes device if its still open"""
-        if self.dev is None:
-            return
-        self.dev.close()
-        self.disconnected = True
-        self.dev = None
 
 class UTBtDevice(BTMixin, UTDevice):
     """Bluetooth adapter (UT-D07B) interface class"""
