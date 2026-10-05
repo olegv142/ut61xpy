@@ -30,8 +30,8 @@ class FnirsiUsbDevice(HIDMixin, Device):
     CURR_CHAN = 0
     VOLT_CHAN = 1
 
-    def __init__(self, dev, path):
-        HIDMixin.__init__(self, dev, path)
+    def __init__(self, *args):
+        super().__init__(*args)
         self.channels = None
 
     def send_cmd(self, cmd):
@@ -110,8 +110,8 @@ class FnirsiBtDevice(BTMixin, Device):
     CURR_CHAN = 0
     VOLT_CHAN = 1
 
-    def __init__(self, dev, addr):
-        BTMixin.__init__(self, dev, addr)
+    def __init__(self, *args):
+        super().__init__(*args)
         self.channels = None
         self.last_data = None
 

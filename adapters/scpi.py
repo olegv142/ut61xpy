@@ -21,8 +21,8 @@ class SCPIDevice(CDCMixin, Device):
     EOL_SYMBOL = b'\n'
     IDLE_DELAY = .01
 
-    def __init__(self, dev, path):
-        CDCMixin.__init__(self, dev, path)
+    def __init__(self, *args):
+        super().__init__(*args)
         self.model = None
 
     def get_model(self):
@@ -86,8 +86,8 @@ class SCPIDmm(SCPIDevice):
     DEF_MODE = 'DUTY%'
     OVERLOAD_VAL = 1e9
 
-    def __init__(self, dev, path):
-        SCPIDevice.__init__(self, dev, path)
+    def __init__(self, *args):
+        super().__init__(*args)
         self.channels = None
         self.modes = None
 
@@ -148,8 +148,8 @@ class SCPIPowerSource(SCPIDevice):
     CURR_CHAN = 0
     VOLT_CHAN = 1
 
-    def __init__(self, dev, path):
-        SCPIDevice.__init__(self, dev, path)
+    def __init__(self, *args):
+        super().__init__(*args)
         self.channels = None
 
     def init(self, nchannels=1):

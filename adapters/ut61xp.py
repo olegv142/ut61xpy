@@ -203,8 +203,8 @@ class UTBtDevice(BTMixin, UTDevice):
     TOUT        = 4  # default timeout in seconds
     IDLE_DELAY  = .1
 
-    def __init__(self, dev, addr):
-        BTMixin.__init__(self, dev, addr)
+    def __init__(self, *args):
+        super().__init__(*args)
         self.last_data = None
 
     def _notify_cb(self, char, val):

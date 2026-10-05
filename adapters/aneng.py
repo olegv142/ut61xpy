@@ -58,8 +58,8 @@ class AnengBtDevice(BTMixin, Device):
         _all - _e           : '9'
     }
 
-    def __init__(self, dev, addr):
-        BTMixin.__init__(self, dev, addr)
+    def __init__(self, *args):
+        super().__init__(*args)
         self.last_data = None
 
     def _notify_cb(self, char, val):
