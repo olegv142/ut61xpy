@@ -19,24 +19,6 @@ log = logging.getLogger('DEV')
 
 class I2CHIDMixin(HIDMixin):
     """The base class for I2C HID adapters"""
-    def __init__(self, dev, path):
-        HIDMixin.__init__(self, dev, path)
-        self.channels = None
-
-    def init(self, nchannels=1):
-        """
-        Initialize device setting the number of channels we are going the read.
-        Should be called before first query_raw call.
-        """
-        self.channels = nchannels
-        self.i2c_init()
-
-    def get_channels(self, data: Any) -> int:
-        """Get the number of channels contained in the raw data"""
-        if not data:
-            return 0
-        return self.channels
-
     def i2c_init(self):
         """Initialize I2C bus"""
         raise NotImplementedError()
@@ -63,12 +45,27 @@ class FT260Mixin(I2CHIDMixin):
     def i2c_read(self, addr: int, length: int) -> list[int]|None:
         return ft260.i2c_read(self.dev, addr, length)
 
-class INA226Device(Device):
-    """INA226 16bit current and voltage monitor base class"""
-    I2C_ADDR = 64
-    CURR_LSB = 2.5e-6
-    VOLT_LSB = 1.25e-3
+class INADevice(Device):
+    """Base class for INAxxx current and voltage monitors"""
     SHUNT_RES = .1
+
+    def __init__(self, *args):
+        super().__init__(*args)
+        self.channels = None
+
+    def init(self, nchannels=1):
+        """
+        Initialize device setting the number of channels we are going the read.
+        Should be called before first query_raw call.
+        """
+        self.channels = nchannels
+        self.i2c_init()
+
+    def get_channels(self, data: Any) -> int:
+        """Get the number of channels contained in the raw data"""
+        if not data:
+            return 0
+        return self.channels
 
     def set_shunt_resistance(self, shunt_res: float):
         """Set shunt resistance in Ohms"""
@@ -92,6 +89,12 @@ class INA226Device(Device):
         if not data:
             return ''
         return ('A', 'V')[channel]
+
+class INA226Device(INADevice):
+    """INA226 16bit current and voltage monitor base class"""
+    I2C_ADDR = 64
+    CURR_LSB = 2.5e-6
+    VOLT_LSB = 1.25e-3
 
     def query_raw(self, idle_sleep=time.sleep) -> Any|None:
         """
@@ -125,7 +128,7 @@ class INA226Device(Device):
         val = struct.unpack('>h', data[channel])[0]
         return val * (self.CURR_LSB / self.SHUNT_RES, self.VOLT_LSB)[channel]
 
-class INA226FT260Device(FT260Mixin, INA226Device):
+class INA226FT260Device(INA226Device, FT260Mixin):
     """Adapter class for INA226 16bit current and voltage monitor connected via FT260 USB chip"""
     MODEL_NAME = 'INA226-FT260'
 
