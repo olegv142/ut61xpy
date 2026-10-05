@@ -130,7 +130,7 @@ class USBMixin:
 
     def __init__(self, dev: Any, path: str):
         """Constructor, called by open_path"""
-        Device.__init__(self, path)
+        super().__init__(path)
         self.dev = dev
         self.disconnected = False
 
@@ -243,7 +243,7 @@ class BTMixin:
     DEVICE_NAME: str = None
 
     def __init__(self, dev: Any, addr: str):
-        Device.__init__(self, addr)
+        super().__init__(addr)
         self.dev = dev
 
     def is_connected(self) -> bool:
