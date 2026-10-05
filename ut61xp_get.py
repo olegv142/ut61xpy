@@ -577,7 +577,7 @@ def main_impl(argv=None):
     parser.add_argument('-B', '--bt', action='store_true',
             help='use Bluetooth for communicating with device')
     parser.add_argument('-M', '--model', type=str, required=False, metavar='NAME', default=None,
-            help='device model (optional, default is %s)' % (UTDevice.MODEL_NAME))
+            help='device model (optional, default is %s)' % (UT61XpUsbDevice.MODEL_NAME))
     parser.add_argument('--name', type=str, required=False, default=None,
             help='set Bluetooth adapter name (optional)')
     parser.add_argument('--param', type=str, metavar='KEY=VAL', action='append',

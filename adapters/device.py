@@ -32,23 +32,16 @@ def import_hid():
         import hidapi as hid
 
 class Device:
-    """Base class for all device adapters"""
+    """
+    Base class for all device adapters.
+    Defines core functionality.
+    """
 
-    # The following property should be redefined in subclasses
-    MODEL_NAME: str = None
-    TOUT = None # default timeout should be specified in subclasses
+    TOUT: float = None # default timeout should be specified in subclasses
     INVALID_VALUE: float = float('nan')
 
-    def __init__(self, path: str):
-        self.path = path
-
-    def get_model(self) -> str:
-        """The implementation may redefine this method to return actual model name"""
-        return self.MODEL_NAME
-
-    def is_connected(self) -> bool:
-        """Subclasses may redefine this method to indicate disconnection"""
-        return True
+    def __init__(self, *args):
+        super().__init__(*args)
 
     def set_param(self, key: str, val: str|float) -> bool:
         """
@@ -109,8 +102,35 @@ class Device:
         """Returns measurement mode and units description string"""
         raise NotImplementedError()
 
+class DeviceMixin:
+    """
+    This class and its descendants encapsulate device model
+    information and connection related functionality.
+    """
+
+    # The following should be redefined in subclasses 
+    MODEL_NAME: str = None
+    IsBT: bool = None
+
+    def __init__(self, path: str):
+        self.path = path
+
+    def __str__(self) -> str:
+        raise NotImplementedError()
+
+    def get_model(self) -> str:
+        """The implementation may redefine this method to return actual model name"""
+        return self.MODEL_NAME
+
+    def is_connected(self) -> bool:
+        """
+        Returns True if device is connected, False otherwise.
+        Subclasses may redefine this method to indicate disconnection.
+        """
+        return True
+
     def close(self):
-        """Closes device"""
+        """Closes device if its still open"""
         raise NotImplementedError()
 
     def __enter__(self):
@@ -121,7 +141,7 @@ class Device:
         """Closes device on exiting 'with' block"""
         self.close()
 
-class USBMixin:
+class USBMixin(DeviceMixin):
     """Methods specific for USB devices"""
     IsBT: bool = False
     # Default VID, PID should be defined in subclasses
@@ -130,7 +150,7 @@ class USBMixin:
 
     def __init__(self, dev: Any, path: str):
         """Constructor, called by open_path"""
-        super().__init__(path)
+        DeviceMixin.__init__(self, path)
         self.dev = dev
         self.disconnected = False
 
@@ -236,14 +256,14 @@ class CDCMixin(USBMixin):
             log.error('failed to open %s USB CDC device %s', cls.MODEL_NAME, path)
             return None
 
-class BTMixin:
+class BTMixin(DeviceMixin):
     """Methods specific for BT devices"""
     IsBT: bool = True
     # Default BT device name should be defined in subclasses
     DEVICE_NAME: str = None
 
     def __init__(self, dev: Any, addr: str):
-        super().__init__(addr)
+        DeviceMixin.__init__(self, addr)
         self.dev = dev
 
     def is_connected(self) -> bool:
