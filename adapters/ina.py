@@ -17,9 +17,13 @@ import ft260
 
 log = logging.getLogger('DEV')
 
-class I2CHIDMixin(HIDMixin):
-    """The base class for I2C HID adapters"""
-    def i2c_init(self):
+class I2CAdapter:
+    """Base class for I2C adapters"""
+    # The following should be defined in subcasses
+    DEVICE_VID = None
+    DEVICE_PID = None
+
+    def __init__(self, dev):
         """Initialize I2C bus"""
         raise NotImplementedError()
 
@@ -31,12 +35,10 @@ class I2CHIDMixin(HIDMixin):
         """Read data bytes from I2C given target address"""
         raise NotImplementedError()
 
-class FT260Mixin(I2CHIDMixin):
-    """FTDI FT260 I2C adapter base class"""
-    DEVICE_VID = ft260.DEVICE_VID
-    DEVICE_PID = ft260.DEVICE_PID
-
-    def i2c_init(self):
+class FT260Adapter(I2CAdapter):
+    """FTDI FT260 I2C adapter class"""
+    def __init__(self, dev):
+        self.dev = dev
         ft260.i2c_init(self.dev)
 
     def i2c_write(self, addr: int, data: list[int]) -> bool:
@@ -45,13 +47,15 @@ class FT260Mixin(I2CHIDMixin):
     def i2c_read(self, addr: int, length: int) -> list[int]|None:
         return ft260.i2c_read(self.dev, addr, length)
 
-class INADevice(Device):
+class INADevice(Device, HIDMixin):
     """Base class for INAxxx current and voltage monitors"""
     SHUNT_RES = .1
+    I2C_ADAPTER_TYPE = None # should be defined in subclasses
 
     def __init__(self, *args):
         super().__init__(*args)
         self.channels = None
+        self.adapter = None
 
     def init(self, nchannels=1):
         """
@@ -59,7 +63,7 @@ class INADevice(Device):
         Should be called before first query_raw call.
         """
         self.channels = nchannels
-        self.i2c_init()
+        self.adapter = self.I2C_ADAPTER_TYPE(self.dev)
 
     def get_channels(self, data: Any) -> int:
         """Get the number of channels contained in the raw data"""
@@ -105,15 +109,15 @@ class INA226Device(INADevice):
         if not self.is_connected():
             return None
         try:
-            if not self.i2c_write(self.I2C_ADDR, [1]): # set target register address
+            if not self.adapter.i2c_write(self.I2C_ADDR, [1]): # set target register address
                 return None
-            if (idata := self.i2c_read(self.I2C_ADDR, 2)) is None:
+            if (idata := self.adapter.i2c_read(self.I2C_ADDR, 2)) is None:
                 return None
             if self.channels < 2:
                 return (bytes(idata),)
-            if not self.i2c_write(self.I2C_ADDR, [2]): # set target register address
+            if not self.adapter.i2c_write(self.I2C_ADDR, [2]): # set target register address
                 return None
-            if (vdata := self.i2c_read(self.I2C_ADDR, 2)) is None:
+            if (vdata := self.adapter.i2c_read(self.I2C_ADDR, 2)) is None:
                 return None
             return (bytes(idata), bytes(vdata))
         except Exception as e:
@@ -128,9 +132,12 @@ class INA226Device(INADevice):
         val = struct.unpack('>h', data[channel])[0]
         return val * (self.CURR_LSB / self.SHUNT_RES, self.VOLT_LSB)[channel]
 
-class INA226FT260Device(INA226Device, FT260Mixin):
+class INA226FT260Device(INA226Device):
     """Adapter class for INA226 16bit current and voltage monitor connected via FT260 USB chip"""
     MODEL_NAME = 'INA226-FT260'
+    I2C_ADAPTER_TYPE = FT260Adapter
+    DEVICE_VID = ft260.DEVICE_VID
+    DEVICE_PID = ft260.DEVICE_PID
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
