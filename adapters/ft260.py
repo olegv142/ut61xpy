@@ -63,11 +63,13 @@ def i2c_wait_idle(dev) -> int:
         delay *= 2
     return sta
 
-def i2c_write(dev, address: int, data: list[int], flags: int = FL_START_STOP) -> bool:
+def i2c_write(dev, address: int, data: list[int], flags: int = FL_START_STOP, wait: bool = False) -> bool:
     assert 0 < len(data) <= 60
     report_id = 0xD0 + (len(data) - 1) // 4
     payload = [report_id, address, flags, len(data)] + data
     dev.write(payload)
+    if not wait:
+        return True
     if sta := i2c_wait_idle(dev):
         log.error('bad status %u writing addr %#x', sta, address)
         return False
