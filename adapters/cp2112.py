@@ -20,11 +20,11 @@ GPIO5 = GPIO4 << 1
 GPIO6 = GPIO5 << 1
 GPIO7 = GPIO6 << 1
 
-# Note that CJMCU-2112 has the following
+# Note that CJMCU-2112 board has the following
 # cryptically named gpio pins:
-# WAK GPIO2
-# INT GPIO3
-# RST GPIO4
+# WAK - GPIO2
+# INT - GPIO3
+# RST - GPIO4
 # So there are 6 gpio pins available.
 # Pins GPIO0,1 are connected to LEDs:
 # GPIO0 - red   LED, active low
