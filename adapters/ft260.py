@@ -1,5 +1,5 @@
 """
-FTDI FT260 adapter I2C and GPIo communication routines
+FTDI FT260 adapter I2C and GPIO communication routines
 """
 
 import time
@@ -137,7 +137,7 @@ GPIOH = GPIOG << 1
 # GPIO control report ID
 GPIO_REPORT = 0xB0
 
-def gpio_write(dev, out_mask: int, out_bits: int):
+def gpio_set(dev, out_mask: int, out_bits: int):
     """
     Setup GPIO direction mask ans set output levels.
     The low order byte corresponds to GPIO0..5 while
@@ -145,8 +145,8 @@ def gpio_write(dev, out_mask: int, out_bits: int):
     """
     dev.send_feature_report([GPIO_REPORT, out_bits & 0xff, out_mask & 0xff, out_bits >> 8, out_mask >> 8])
 
-def gpio_read(dev) -> int:
-    """Read GPIO bits as 16 bit word with the same mapping to pins as for gpio_write"""
+def gpio_get(dev) -> int:
+    """Read GPIO bits as 16 bit word with the same mapping to pins as for gpio_set"""
     report = dev.get_feature_report(GPIO_REPORT, 64)
     assert len(report) == 5
     assert report[0] == GPIO_REPORT
@@ -175,11 +175,11 @@ if __name__ == '__main__':
     gpio_setup_pinG(dev)
     while True:
         out_bits = out_pins & ~GPIOD
-        gpio_write(dev, out_pins, out_bits)
-        assert gpio_read(dev) & out_pins == out_bits
+        gpio_set(dev, out_pins, out_bits)
+        assert gpio_get(dev) & out_pins == out_bits
         time.sleep(1)
         out_bits = GPIOD
-        gpio_write(dev, out_pins, out_bits)
-        assert gpio_read(dev) & out_pins == out_bits
+        gpio_set(dev, out_pins, out_bits)
+        assert gpio_get(dev) & out_pins == out_bits
         time.sleep(1)
         print('.', end='', flush=True)
