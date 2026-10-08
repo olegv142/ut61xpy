@@ -17,9 +17,9 @@
 | [USB]       |                 | 22 / .001 mA   | 5 Ohm            | $\color{blue}{\text{110 / .005}}$  |        |
 |             |                 | 220 / .01 mA   | 5 Ohm            | $\color{red}{\text{1100 / .05}}$   |        |
 |             |                 | 20 / .001 A    | .01 Ohm          |                                    |        |
-| ZOYI        | 10 / .001 mV    | 100 / .01 µA   | 100 Ohm          | $\color{green}{\text{10 / .001}}$  |        |
+| ZOYI        | 10 / .001 mV    | 100 / .01 µA   | 100 Ohm          | $\color{green}{\text{10 / .001}}$  | EBTN   |
 | ZT-Y        |                 | 1000 / .1 µA   | 100 Ohm          | $\color{green}{\text{100 / .01}}$  |        |
-|             |                 | 10 / .001 mA   | 1 Ohm            | $\color{green}{\text{10 / .001}}$  | EBTN   |
+|             |                 | 10 / .001 mA   | 1 Ohm            | $\color{green}{\text{10 / .001}}$  |        |
 |             |                 | 100 / .01 mA   | 1 Ohm            | $\color{green}{\text{100 / .01}}$  |        |
 |             |                 | 1 / .0001 A    | .01 Ohm          |                                    |        |
 |             |                 | 10 / .001 A    | .01 Ohm          |                                    |        |
@@ -74,7 +74,8 @@ Important note for all current ranges:
 2. The exact value of the shunt resistance in ampere range is unknown. Typically its just a piece of wire with not calibrated resistance.
 
 Notes column abbreviations:
-G    - Glitches. Sometimes device display goes mad.
-EBTN - Enhanced Background Twist Nematic display. Such displays have permanent back lit consuming around 20mA. Therefore, the battery life
-       of these devices is typically 10 times shorter than that of devices with a traditional LCD display.
-DB   - Dead band. The region of small voltage or current values always measured as zero.
+| Abbrev | Meaning                                     |
+|--------|---------------------------------------------|
+| G      | Glitches. Sometimes device display goes mad |
+| EBTN   | Enhanced Background Twist Nematic display. Such displays have permanent back lit consuming around 20mA. Therefore, the battery life of these devices is typically 10 times shorter than that of devices with a traditional LCD display. |
+| DB     | Dead band. The region of small voltage or current values always measured as zero. |
