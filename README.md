@@ -540,6 +540,7 @@ Each multimeter may be characterized by the shunt voltage measuring resolution. 
 ### Best models
 1. OWON XDM1241 is the best budget DMM with some reservations. Its not quite portable, slow and has almost unusable capacitance measuring mode. Choose it if you don't need portability, long battery life and don't bother measuring capacitance under 1nF.
 2. OWON OW18E is the best portable DMM with only one serious drawback - the dead band from -5µV to +5µV where input voltage always reads as zero. Choose it if you need portability, long battery life and can tolerate dead band. Note that fortunately there are no dead bands in its current ranges.
+3. INA226/228 modules provide 64k and 1M counts respectively with fixed voltage range and current measuring range depending on the shunt resistance. The INA228 even has two software-switchable ranges, providing the best shunt voltage resolution by the order of magnitude better (smaller) than the best multimeter models considered above.
 
 ### Not so good models
 1. All 6000 count models are not very good at current measurements since you will have only 60 counts in the worst case. They also typically have 10µV resolution.
