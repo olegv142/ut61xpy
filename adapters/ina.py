@@ -113,6 +113,11 @@ class INA226Device(INADevice):
     CURR_LSB = 2.5e-6
     VOLT_LSB = 1.25e-3
 
+    def init(self, nchannels=1):
+        INADevice.init(self, nchannels)
+        # Set 4 msec conversion time and 4 samples averaging
+        self.adapter.i2c_write(self.I2C_ADDR, [0, 0x43, 0xB7])
+
     def query_raw(self, idle_sleep=time.sleep) -> Any|None:
         """
         Query raw data from device. Here we ignore timeout and idle callback args since
