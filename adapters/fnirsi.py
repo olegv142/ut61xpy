@@ -20,7 +20,6 @@ class FnirsiUsbDevice(HIDMixin, Device):
     """USB HID adapter for FNIRSI USB testers"""
     CMD_INIT  = [0xaa, 0x81] + [0] * 61 + [0x8e]
     CMD_START = [0xaa, 0x82] + [0] * 61 + [0x96]
-    CMD_POLL  = [0xaa, 0x83] + [0] * 61 + [0x9e]
 
     CMD_INTERVAL = 0.05
     IDLE_DELAY   = 0.05
@@ -46,8 +45,6 @@ class FnirsiUsbDevice(HIDMixin, Device):
         try:
             self.send_cmd(self.CMD_INIT)
             time.sleep(self.CMD_INTERVAL)
-            self.send_cmd(self.CMD_START)
-            time.sleep(self.CMD_INTERVAL)
         except Exception as e:
             self.disconnected = True
             log.debug(e, exc_info=True)
@@ -64,10 +61,10 @@ class FnirsiUsbDevice(HIDMixin, Device):
             return None
         wait = self.TOUT
         try:
-            self.send_cmd(self.CMD_POLL)
+            self.send_cmd(self.CMD_START)
             while True:
                 idle_sleep(self.IDLE_DELAY)
-                buf = self.dev.read(64)
+                buf = self.read_last(64)
                 if buf and buf[0] == 0xaa and buf[1] == 4:
                     break
                 wait -= self.IDLE_DELAY

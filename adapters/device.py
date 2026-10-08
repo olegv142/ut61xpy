@@ -233,6 +233,16 @@ class HIDMixin(USBMixin):
         dev.set_nonblocking(True)
         return dev
 
+    def read_last(self, len: int) -> list[int]|None:
+        last_report = None
+        while True:
+            if report := self.dev.read(len):
+                if last_report:
+                    print('skip')
+                last_report = report
+            else:
+                return last_report
+
 class CDCMixin(USBMixin):
     """Methods specific for USB CDC devices"""
     # The following properties may be redefined in subclasses
