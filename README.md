@@ -298,6 +298,9 @@ sudo systemctl disable ModemManager
 ### CP2112 USB-I2C adapter not found on Windows after some period of inactivity
 To fix it find the adapter in Device Manager / Human Interface Devices (VID = 0x10C4, PID = 0xEA90), open its Power Management properties and uncheck 'Allow the computer to turn off this device to save power'.
 
+### The electric current values read from INA226/228 are very noisy
+Most probably you have left INA module ground floating while measuring current. Connecting only two current terminals of the INA module to electric circuit while measuring current seems logical, similar to using a digital multimeter. However, due to differences in the measuring circuits, this results in very high noise levels during measurement and in some cases may even damage the INA module. Its strongly recommended to attach the INA module ground either to the ground of the circuit being measured or connect it directly to the negative current terminal.
+
 ### Unable to open device USB port on Linux
 An attempt to access the device as plain user may fail on Linux due to restrictive permissions. To be able to access the USB serial port you either have to run the **ut61xp-get** or **ut61xp-start** tool as a root or add iself to *dialout* group:
 ```
