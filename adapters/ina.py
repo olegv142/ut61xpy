@@ -14,6 +14,7 @@ if __package__: sys.path.append(os.path.realpath(os.path.dirname(__file__)))
 
 from device import Device, HIDMixin
 import ft260
+import cp2112
 
 log = logging.getLogger('DEV')
 
@@ -46,6 +47,18 @@ class FT260Adapter(I2CAdapter):
 
     def i2c_read(self, addr: int, length: int) -> list[int]|None:
         return ft260.i2c_read(self.dev, addr, length)
+
+class CP2112Adapter(I2CAdapter):
+    """Silicon Labs CP2112 I2C adapter class"""
+    def __init__(self, dev):
+        self.dev = dev
+        cp2112.i2c_init(self.dev)
+
+    def i2c_write(self, addr: int, data: list[int]) -> bool:
+        return cp2112.i2c_write(self.dev, addr, data)
+
+    def i2c_read(self, addr: int, length: int) -> list[int]|None:
+        return cp2112.i2c_read(self.dev, addr, length)
 
 class INADevice(Device, HIDMixin):
     """Base class for INAxxx current and voltage monitors"""
@@ -139,16 +152,23 @@ class INA226FT260Device(INA226Device):
     DEVICE_VID = ft260.DEVICE_VID
     DEVICE_PID = ft260.DEVICE_PID
 
+class INA226CP2112Device(INA226Device):
+    """Adapter class for INA226 16bit current and voltage monitor connected via CP2112 USB chip"""
+    MODEL_NAME = 'INA226-CP2112'
+    I2C_ADAPTER_TYPE = CP2112Adapter
+    DEVICE_VID = cp2112.DEVICE_VID
+    DEVICE_PID = cp2112.DEVICE_PID
+
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
-    devT = INA226FT260Device
+    devT = INA226CP2112Device if '--2112' in sys.argv[1:] else INA226FT260Device
     if dev := devT.open():
         print(dev)
         with dev:
             dev.init(2)
             while dev.is_connected():
                 data = dev.query_raw()
-                print(
+                print(data,
                     dev.get_value(data, 0), dev.get_mode(data, 0),
                     dev.get_value(data, 1), dev.get_mode(data, 1)
                 )

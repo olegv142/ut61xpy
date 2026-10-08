@@ -10,6 +10,89 @@ log = logging.getLogger('DEV')
 DEVICE_VID = 0x10C4
 DEVICE_PID = 0xEA90
 
+MIN_DELAY = .005
+READ_TOUT = .025
+BUSY_TOUT = .050
+
+# I2C status
+STA_IDLE    = 0
+STA_BUSY    = 1
+STA_SUCCESS = 2
+STA_FAILURE = 3
+
+def i2c_init(dev):
+    dev.set_nonblocking(True)
+
+def read_packet(dev, pkt_id: int):
+    wait = READ_TOUT
+    delay = MIN_DELAY
+    while True:
+        if pkt := dev.read(64):
+            if pkt[0] == pkt_id:
+                return pkt
+        if wait <= 0:
+            break
+        time.sleep(delay)
+        wait -= delay
+        delay *= 2
+    return None
+
+def i2c_query_status(dev) -> int:
+    dev.write([0x15, 0x01])
+    pkt = read_packet(dev, 0x16)
+    return pkt[1] if pkt else None
+
+def i2c_wait_idle(dev) -> bool:
+    wait = BUSY_TOUT
+    delay = MIN_DELAY
+    while True:
+        sta = i2c_query_status(dev)
+        if sta in (STA_IDLE, STA_SUCCESS):
+            return True
+        if sta != STA_BUSY:
+            log.debug('bad status %sx', sta)
+            return False
+        if wait <= 0:
+            break
+        time.sleep(delay)
+        wait -= delay
+        delay *= 2
+    log.debug('bad status %s', sta)
+    return False
+
+def i2c_write(dev, address: int, data: list[int]):
+    assert 0 < len(data) <= 61
+    payload = [0x14, (address << 1), len(data)] + data
+    dev.write(payload)
+    if not i2c_wait_idle(dev):
+        log.error('error writing addr %#x', address)
+        return False
+    return True
+
+def i2c_read(dev, address: int, length: int) -> list[int]|None:
+    dev.write([0x10, address << 1, 0, length])
+    if not i2c_wait_idle(dev):
+        log.error('error reading addr %#x', address)
+        return None
+    dev.write([0x12, length])
+    report = read_packet(dev, 0x13)
+    if report is None:
+        log.error('timeout reading addr %#x', address)
+        return None
+    if len(report) < 3 + length:
+        log.error('bad packet length reading addr %#x: expects %u, got %u',
+            address, length + 3, len(report))
+        return None
+    if length != report[2]:
+        log.error('bad data length reading addr %#x: expects %u, got %u',
+            address, length, report[2])
+        return None
+    return bytes(report[3:length + 3])
+
+#
+# GPIO routines
+#
+
 # GPIO bits definitions
 GPIO0 = 1
 GPIO1 = GPIO0 << 1
