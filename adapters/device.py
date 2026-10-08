@@ -34,7 +34,7 @@ def import_hid():
 class Device:
     """
     Base class for all device adapters.
-    Defines core functionality.
+    Defines core functionality related to data readout.
     """
 
     TOUT: float = None # default timeout should be specified in subclasses
@@ -102,10 +102,13 @@ class Device:
         """Returns measurement mode and units description string"""
         raise NotImplementedError()
 
-class DeviceMixin:
+class DeviceInstanceMixin:
     """
-    This class and its descendants encapsulate device model
-    information and connection related functionality.
+    This class and its descendants define methods related to creating a device adapter instance,
+    specifically, device model information and connection-related functionality.
+    Every multimeter adapter should be inherited from this class and Device class or their
+    descendants. Having two inheritance chains provides maximum implementation flexibility since
+    it allows for implementing different aspects of the device behavior in separate base classes.
     """
 
     # The following should be redefined in subclasses 
@@ -141,7 +144,7 @@ class DeviceMixin:
         """Closes device on exiting 'with' block"""
         self.close()
 
-class USBMixin(DeviceMixin):
+class USBMixin(DeviceInstanceMixin):
     """Methods specific for USB devices"""
     IsBT: bool = False
     # Default VID, PID should be defined in subclasses
@@ -150,7 +153,7 @@ class USBMixin(DeviceMixin):
 
     def __init__(self, dev: Any, path: str):
         """Constructor, called by open_path"""
-        DeviceMixin.__init__(self, path)
+        DeviceInstanceMixin.__init__(self, path)
         self.dev = dev
         self.disconnected = False
 
@@ -256,14 +259,14 @@ class CDCMixin(USBMixin):
             log.error('failed to open %s USB CDC device %s', cls.MODEL_NAME, path)
             return None
 
-class BTMixin(DeviceMixin):
+class BTMixin(DeviceInstanceMixin):
     """Methods specific for BT devices"""
     IsBT: bool = True
     # Default BT device name should be defined in subclasses
     DEVICE_NAME: str = None
 
     def __init__(self, dev: Any, addr: str):
-        DeviceMixin.__init__(self, addr)
+        DeviceInstanceMixin.__init__(self, addr)
         self.dev = dev
 
     def is_connected(self) -> bool:
