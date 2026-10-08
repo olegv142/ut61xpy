@@ -295,6 +295,9 @@ sudo systemctl stop ModemManager
 sudo systemctl disable ModemManager
 ```
 
+### CP2112 USB-I2C adapter not found on Windows after some period of inactivity
+To fix it find the adapter in Device Manager / Human Interface Devices (VID = 0x10C4, PID = 0xEA90), open its Power Management properties and uncheck 'Allow the computer to turn off this device to save power'.
+
 ### Unable to open device USB port on Linux
 An attempt to access the device as plain user may fail on Linux due to restrictive permissions. To be able to access the USB serial port you either have to run the **ut61xp-get** or **ut61xp-start** tool as a root or add iself to *dialout* group:
 ```
