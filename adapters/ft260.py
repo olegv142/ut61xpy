@@ -32,12 +32,13 @@ def i2c_init(dev):
     dev.set_nonblocking(True)
     dev.send_feature_report([0xA1, 0x20]) # reset I2C
 
-def read_packet(dev):
+def read_packet(dev, pkt_id: int):
     wait = READ_TOUT
     delay = MIN_DELAY
     while True:
         if pkt := dev.read(64):
-            return pkt
+            if pkt[0] == pkt_id:
+                return pkt
         if wait <= 0:
             break
         time.sleep(delay)
@@ -63,10 +64,12 @@ def i2c_wait_idle(dev) -> int:
         delay *= 2
     return sta
 
+def data_report_id(length: int):
+    return 0xD0 + (length - 1) // 4
+
 def i2c_write(dev, address: int, data: list[int], flags: int = FL_START_STOP, wait: bool = False) -> bool:
     assert 0 < len(data) <= 60
-    report_id = 0xD0 + (len(data) - 1) // 4
-    payload = [report_id, address, flags, len(data)] + data
+    payload = [data_report_id(len(data)), address, flags, len(data)] + data
     dev.write(payload)
     if not wait:
         return True
@@ -78,7 +81,7 @@ def i2c_write(dev, address: int, data: list[int], flags: int = FL_START_STOP, wa
 def i2c_read(dev, address: int, length: int, flags: int = FL_START_STOP) -> list[int]|None:
     assert 0 < length <= 60
     dev.write([0xC2, address, flags, length, 0])
-    report = read_packet(dev)
+    report = read_packet(dev, data_report_id(length))
     if report is None:
         log.error('timeout reading addr %#x', address)
         return None
@@ -88,6 +91,7 @@ def i2c_read(dev, address: int, length: int, flags: int = FL_START_STOP) -> list
     if len(report) < 2 + length:
         log.error('bad packet length reading addr %#x: expects %u, got %u',
             address, length + 2, len(report))
+        return None
     if length != report[1]:
         log.error('bad data length reading addr %#x: expects %u, got %u',
             address, length, report[1])
