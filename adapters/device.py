@@ -234,13 +234,16 @@ class HIDMixin(USBMixin):
         return dev
 
     def read_last(self, len: int) -> list[int]|None:
+        skip = 0
         last_report = None
         while True:
             if report := self.dev.read(len):
                 if last_report:
-                    print('skip')
+                    skip += 1
                 last_report = report
             else:
+                if skip:
+                    log.debug('skip %d reports', skip)
                 return last_report
 
 class CDCMixin(USBMixin):
