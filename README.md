@@ -1,4 +1,4 @@
-# The cross-platform digital multimeter communication and data plotting tool supporting variety of popular UNI-T, OWON, ANENG, ZOTEK, BSIDE multimeters and FNIRSI USB testers.
+# The cross-platform digital multimeter communication and data plotting tool supporting variety of popular UNI-T, OWON, ANENG, ZOTEK, BSIDE multimeters, FNIRSI USB testers and INA226/228 current & voltage monitor boards.
 
 This repository provides simple alternative to vendor data collection programs. It works uniformly on Windows and Linux (not tested on MacOS). One can use it either from command line or GUI. Since the code is written in python it may be easily incorporated onto your complex measuring or automation system. 
 
@@ -46,6 +46,9 @@ The Zotek/Aneng multimeters use display segment based encoding for BT communicat
 
 ### FNIRSI USB testers
 FNIRSI produces a line of USB testers capable of measuring USB bus voltage, load current and some other parameters. The tool supports reading USB bus current and optionally voltage in alternative measuring channel. Currently supported devices are FNAC28, FNB48P, FNB58 and FNB-C2. The data can be read either via USB or Bluetooth connection (if supported by device). While Bluetooth is convenient the USB connection provides significantly better resolution and reliability.
+
+### INA226/228 current & voltage monitor boards
+The INA226 and INA228 are high precision digital current and voltage monitor integrated circuits manufactured by Texas Instruments. They are sold by many vendors in a convenient form, soldered to small printed circuit boards with all necessary connectors. The tool is able to collect readings from such boards by means of additional USB to HID adapter. There are two such adapter boards supported. The first one is based on FTDI FT260 chip. Another one is based on Silicon Labs CP2112 chip. These are inexpensive boars sold by many manufacturers. You only have to connect INA board with USB HID adapter board by 4 wires (GND, VCC, SDA, SCL). After that you will have the precision device for measuring current and voltage at the same time. The INA226 is able to deliver 64k counts while INA228 have 1M counts. Both can be read at the rate of around 10 samples per second. The INA228 module provides current measuring resolution outperforming by an order of magnitude the capabilities of any other multimeter at the fraction of their price.
 
 ## Installation
 ### Working with sources
@@ -219,6 +222,11 @@ By default, the **ut61xp-get** tool expects the UT61X+ multimeter as the target 
 |         | FNB58 USB tester via USB connection          | -M FNB58              | FNB58 USB                          |
 |         | FNB58 USB tester via Bluetooth               | -M FNB58 -B           | FNB58 BT                           |
 |         | FNB-C2 USB tester                            | -M FNB-C2             | FNB-C2 USB                         |
+| TI      | INA226 + FT260 adapter                       | -M INA226-FT260       | INA226-FT260 USB                   |
+|         | INA226 + CP2112 adapter                      | -M INA226-CP2112      | INA226-CP2112 USB                  |
+|         | INA228 + FT260 adapter                       | -M INA228-FT260       | INA228-FT260 USB                   |
+|         | INA228 + CP2112 adapter                      | -M INA228-CP2112      | INA228-CP2112 USB                  |
+
 
 # Working with GUI
 The GUI workflow is built around **ut61xp-start** script that provides convenient UI for setting **ut61xp-get** options and launching data acquisition in separate processes. The single instance of **ut61xp-start** UI can launch any number of data acquisition processes working in parallel, saving data to separate files and showing collected data in their own data plot windows. The following figure illustrates using data acquisition GUI reading data from 3 multimeters simultaneously on Raspberry Pi5.
