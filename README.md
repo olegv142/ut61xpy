@@ -306,7 +306,16 @@ An attempt to access the device as plain user may fail on Linux due to restricti
 ```
 sudo usermod -aG dialout $USER
 ```
-You have to re-login or reboot to apply new group membership properly. However, this approach does not work with HID devices. They require creating a custom udev rule or running as a root.
+You have to re-login or reboot to apply new group membership properly. Note that this approach does not work with HID devices (see below).
+
+### Unable to access USB HID device on Linux
+An attempt to access the HID device as plain user may fail on Linux due to restrictive permissions. To be able to access the USB HID device you either have to run the **ut61xp-get** or **ut61xp-start** tool as a root or execute the following:
+```
+sudo groupadd -r hidaccess
+sudo usermod -aG hidaccess $USER
+echo 'SUBSYSTEM=="usb", GROUP="hidaccess", MODE="0664"' | sudo tee /etc/udev/rules.d/99-hid-access.rules
+```
+You have to re-login or reboot to apply new group membership properly.
 
 # Appendixes
 
