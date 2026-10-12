@@ -79,4 +79,4 @@ Notes column abbreviations:
 | G       | Glitches. Sometimes device display goes mad. |
 | EBTN    | Enhanced Background Twist Nematic display. Such displays have permanent back lit consuming around 20mA. Therefore, the battery life of these devices is typically 10 times shorter than that of devices with a traditional LCD display. |
 | DB      | Dead band. The region of small voltage or current values always measured as zero. |
-| XDM1241 | Capacitance mode is not working for anything below 1nF. The device is newer really switching itself off. Active mode consumption starts from 20mA, off mode consumption is 2.5mA. |
+| XDM1241 | Capacitance mode is not working for anything below 1nF. The device is newer really switching itself off consuming 1.2mA in off mode. |
