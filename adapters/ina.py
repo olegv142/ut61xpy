@@ -39,6 +39,9 @@ class I2CAdapter:
 
 class FT260Adapter(I2CAdapter):
     """FTDI FT260 I2C adapter class"""
+    DEVICE_VID = ft260.DEVICE_VID
+    DEVICE_PID = ft260.DEVICE_PID
+
     def __init__(self, dev):
         self.dev = dev
         ft260.i2c_init(self.dev)
@@ -51,6 +54,9 @@ class FT260Adapter(I2CAdapter):
 
 class CP2112Adapter(I2CAdapter):
     """Silicon Labs CP2112 I2C adapter class"""
+    DEVICE_VID = cp2112.DEVICE_VID
+    DEVICE_PID = cp2112.DEVICE_PID
+
     def __init__(self, dev):
         self.dev = dev
         cp2112.i2c_init(self.dev)
@@ -64,7 +70,10 @@ class CP2112Adapter(I2CAdapter):
 class INADevice(Device, HIDMixin):
     """Base class for INAxxx current and voltage monitors"""
     SHUNT_RES = .1
-    I2C_ADAPTER_TYPE = None # should be defined in subclasses
+    # default i2c adapter
+    I2C_ADAPTER_TYPE = FT260Adapter
+    DEVICE_VID = I2C_ADAPTER_TYPE.DEVICE_VID
+    DEVICE_PID = I2C_ADAPTER_TYPE.DEVICE_PID
 
     # Channel names for convenience
     CURR_CHAN = 0
@@ -75,6 +84,30 @@ class INADevice(Device, HIDMixin):
         super().__init__(*args)
         self.channels = None
         self.adapter = None
+
+    @classmethod
+    def set_i2c_adapter(cls, T):
+        cls.I2C_ADAPTER_TYPE = T
+        cls.DEVICE_VID = T.DEVICE_VID
+        cls.DEVICE_PID = T.DEVICE_PID
+        return cls
+
+    @classmethod
+    def set_model_param(cls, key: str, val: str) -> bool:
+        """
+        Set model specific parameter.
+        Returns True if key / val pair is recognized, False otherwise.
+        """
+        lkey = key.lower()
+        if lkey == 'i2c':
+            uval = val.upper()
+            if uval == 'FT260':
+                cls.set_i2c_adapter(FT260Adapter)
+                return True
+            if uval == 'CP2112':
+                cls.set_i2c_adapter(CP2112Adapter)
+                return True
+        return super().set_model_param(key, val)
 
     def init(self, nchannels: int = 1):
         """
@@ -115,6 +148,7 @@ class INADevice(Device, HIDMixin):
 
 class INA226Device(INADevice):
     """INA226 16bit current and voltage monitor base class"""
+    MODEL_NAME = 'INA226'
     I2C_ADDR = 64
     CURR_LSB = 2.5e-6
     VOLT_LSB = 1.25e-3
@@ -158,6 +192,7 @@ class INA226Device(INADevice):
 
 class INA228Device(INADevice):
     """INA228 20bit current and voltage monitor base class"""
+    MODEL_NAME = 'INA228'
     I2C_ADDR = 64
     CURR0_LSB = 312.5e-9
     CURR1_LSB = 78.125e-9
@@ -292,42 +327,11 @@ class INA228Device(INADevice):
                 val += val * (temp - 25) * self.TEMPCO
         return val
 
-class INA226FT260Device(INA226Device):
-    """Adapter class for INA226 16bit current and voltage monitor connected via FT260 USB chip"""
-    MODEL_NAME = 'INA226-FT260'
-    I2C_ADAPTER_TYPE = FT260Adapter
-    DEVICE_VID = ft260.DEVICE_VID
-    DEVICE_PID = ft260.DEVICE_PID
-
-class INA226CP2112Device(INA226Device):
-    """Adapter class for INA226 16bit current and voltage monitor connected via CP2112 USB chip"""
-    MODEL_NAME = 'INA226-CP2112'
-    I2C_ADAPTER_TYPE = CP2112Adapter
-    DEVICE_VID = cp2112.DEVICE_VID
-    DEVICE_PID = cp2112.DEVICE_PID
-
-class INA228FT260Device(INA228Device):
-    """Adapter class for INA228 20bit current and voltage monitor connected via FT260 USB chip"""
-    MODEL_NAME = 'INA228-FT260'
-    I2C_ADAPTER_TYPE = FT260Adapter
-    DEVICE_VID = ft260.DEVICE_VID
-    DEVICE_PID = ft260.DEVICE_PID
-
-class INA228CP2112Device(INA228Device):
-    """Adapter class for INA228 20bit current and voltage monitor connected via CP2112 USB chip"""
-    MODEL_NAME = 'INA228-CP2112'
-    I2C_ADAPTER_TYPE = CP2112Adapter
-    DEVICE_VID = cp2112.DEVICE_VID
-    DEVICE_PID = cp2112.DEVICE_PID
-
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG) 
-    if '--228' in sys.argv[1:]:
-        devT = INA228CP2112Device if '--2112' in sys.argv[1:] else INA228FT260Device
-    else:
-        devT = INA226CP2112Device if '--2112' in sys.argv[1:] else INA226FT260Device
-    if dev := devT.open():
+    devT = INA228Device if '--228' in sys.argv[1:] else INA226Device    
+    if dev := devT.set_i2c_adapter(CP2112Adapter if '--2112' in sys.argv[1:] else FT260Adapter).open():
         print(dev)
         with dev:
             dev.init(dev.NCHANNELS)
