@@ -211,8 +211,8 @@ class INA228Device(INADevice):
         Set device specific parameter.
         Returns True if key / val pair is recognized, False otherwise.
         """
+        lkey = key.lower()
         try:
-            lkey = key.lower()
             if lkey == 'range':
                 self.set_shunt_voltage_range(int(val))
                 return True

@@ -246,13 +246,6 @@ class UTBtDevice(BTMixin, UTDevice):
             return None
         return self._validate_raw_data(self.last_data)
 
-    def close(self):
-        """Closes device if its still open"""
-        if self.dev is None:
-            return
-        bt_engine.async_exec(self.dev.disconnect())
-        self.dev = None
-
 class UT61XpUsbDevice(UTUsbDevice):
     MODEL_NAME = 'UT61X+'
 

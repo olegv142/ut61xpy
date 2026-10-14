@@ -125,6 +125,21 @@ class DeviceInstanceMixin:
         """The implementation may redefine this method to return actual model name"""
         return self.MODEL_NAME
 
+    @classmethod
+    def list_paths(cls) -> list[str]:
+        """Returns the list of device paths"""
+        raise NotImplementedError()
+
+    @classmethod
+    def open(cls) -> Any:
+        """Opens device instance and returns it"""
+        raise NotImplementedError()
+
+    @classmethod
+    def open_path(cls, path: str) -> Any:
+        """Opens device given the path"""
+        raise NotImplementedError()
+
     def is_connected(self) -> bool:
         """
         Returns True if device is connected, False otherwise.
@@ -143,6 +158,14 @@ class DeviceInstanceMixin:
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Closes device on exiting 'with' block"""
         self.close()
+
+    @classmethod
+    def set_model_param(cls, key: str, val: str) -> bool:
+        """
+        Set model specific parameter.
+        Returns True if key / val pair is recognized, False otherwise.
+        """
+        return False
 
 class USBMixin(DeviceInstanceMixin):
     """Methods specific for USB devices"""
@@ -170,11 +193,6 @@ class USBMixin(DeviceInstanceMixin):
         self.dev = None
 
     @classmethod
-    def list_paths(cls, vid: int|None = None, pid: int|None = None) -> list[str]:
-        """Returns the list of USB device paths"""
-        raise NotImplementedError()
-
-    @classmethod
     def open_path(cls, path: str) -> Any:
         """Opens device given the path"""
         dev = cls._open_path(path)
@@ -184,17 +202,13 @@ class USBMixin(DeviceInstanceMixin):
 
     @classmethod
     def _open_path(cls, path: str) -> Any:
-        """Opens device given the path and returns it"""
+        """Opens raw device given the path and returns it"""
         raise NotImplementedError()
 
     @classmethod
-    def open(cls, vid: int|None = None, pid: int|None = None) -> Any:
-        """Opens device instance given its VID, PID and returns it"""
-        if vid is None:
-            vid = cls.DEVICE_VID
-        if pid is None:
-            pid = cls.DEVICE_PID
-        paths = cls.list_paths(vid, pid)
+    def open(cls) -> Any:
+        """Opens device instance and returns it"""
+        paths = cls.list_paths()
         if not paths:
             log.error('%s USB device not found', cls.MODEL_NAME)
             return None
@@ -206,17 +220,31 @@ class USBMixin(DeviceInstanceMixin):
     def __str__(self) -> str:
         return '[' + self.MODEL_NAME + ' USB]'
 
+    @classmethod
+    def set_model_param(cls, key: str, val: str) -> bool:
+        """
+        Set model specific parameter.
+        Returns True if key / val pair is recognized, False otherwise.
+        """
+        lkey = key.lower()
+        try:
+            if lkey == 'vid':
+                cls.DEVICE_VID = int(val, 0)
+                return True
+            if lkey == 'pid':
+                cls.DEVICE_PID = int(val, 0)
+                return True
+        except Exception as e:
+            log.debug(e, exc_info=True)
+        return super().set_model_param(key, val)
+
 class HIDMixin(USBMixin):
     """Methods specific for USB HID devices"""
     @classmethod
-    def list_paths(cls, vid: int|None = None, pid: int|None = None) -> list[str]:
+    def list_paths(cls) -> list[str]:
         """Returns the list of HID device paths"""
         import_hid()
-        if vid is None:
-            vid = cls.DEVICE_VID
-        if pid is None:
-            pid = cls.DEVICE_PID
-        return [dev['path'].decode('ascii') for dev in hid.enumerate(vid, pid)]
+        return [dev['path'].decode('ascii') for dev in hid.enumerate(cls.DEVICE_VID, cls.DEVICE_PID)]
 
     @classmethod
     def _open_path(cls, path: str) -> 'hid.device'|None:
@@ -253,14 +281,10 @@ class CDCMixin(USBMixin):
     WRITE_TIMEOUT: float = .1
 
     @classmethod
-    def list_paths(cls, vid: int|None = None, pid: int|None = None) -> list[str]:
+    def list_paths(cls) -> list[str]:
         """Returns the list of CDC device paths"""
         from serial.tools.list_ports import comports
-        if vid is None:
-            vid = cls.DEVICE_VID
-        if pid is None:
-            pid = cls.DEVICE_PID
-        return [port.device for port in comports() if port.vid == vid and port.pid == pid]
+        return [port.device for port in comports() if port.vid == cls.DEVICE_VID and port.pid == cls.DEVICE_PID]
 
     @classmethod
     def _open_path(cls, path: str) -> 'serial.Serial'|None:
@@ -272,6 +296,21 @@ class CDCMixin(USBMixin):
             log.error('failed to open %s USB CDC device %s', cls.MODEL_NAME, path)
             return None
 
+    @classmethod
+    def set_model_param(cls, key: str, val: str) -> bool:
+        """
+        Set model specific parameter.
+        Returns True if key / val pair is recognized, False otherwise.
+        """
+        lkey = key.lower()
+        try:
+            if lkey == 'baud':
+                cls.BAUD_RATE = int(val)
+                return True
+        except Exception as e:
+            log.debug(e, exc_info=True)
+        return super().set_model_param(key, val)
+
 class BTMixin(DeviceInstanceMixin):
     """Methods specific for BT devices"""
     IsBT: bool = True
@@ -282,16 +321,20 @@ class BTMixin(DeviceInstanceMixin):
         DeviceInstanceMixin.__init__(self, addr)
         self.dev = dev
 
-    def is_connected(self) -> bool:
-        """Returns True if device is connected, False otherwise"""
-        return self.dev and self.dev.is_connected
+    @classmethod
+    def list_paths(cls) -> list[str]:
+        """Returns the list of device paths"""
+        return cls.list_addrs()
 
     @classmethod
-    def list_addrs(cls, name: str|None = None) -> list[str]:
+    def list_addrs(cls) -> list[str]:
         """Returns the list of BT device addresses"""
-        if name is None:
-            name = cls.DEVICE_NAME
-        return bt_engine.list_addrs(name)
+        return bt_engine.list_addrs(cls.DEVICE_NAME)
+
+    @classmethod
+    def open_path(cls, path: str) -> Any:
+        """Opens device given the path"""
+        return cls.open_addr(path)
 
     @classmethod
     def open_addr(cls, addr: str) -> Any:
@@ -299,11 +342,9 @@ class BTMixin(DeviceInstanceMixin):
         raise NotImplementedError()
 
     @classmethod
-    def open(cls, name: str|None = None) -> Any:
-        """Opens BT device instance given its name and returns it"""
-        if name is None:
-            name = cls.DEVICE_NAME
-        addrs = cls.list_addrs(name)
+    def open(cls) -> Any:
+        """Opens BT device instance and returns it"""
+        addrs = cls.list_addrs()
         if not addrs:
             log.error('%s BT device not found', cls.MODEL_NAME)
             return None
@@ -311,6 +352,29 @@ class BTMixin(DeviceInstanceMixin):
             log.error('%d %s BT devices found', len(addrs), cls.MODEL_NAME)
             return None
         return cls.open_addr(addrs[0])
+
+    def is_connected(self) -> bool:
+        """Returns True if device is connected, False otherwise"""
+        return self.dev and self.dev.is_connected
+
+    def close(self):
+        """Closes device if its still open"""
+        if self.dev is None:
+            return
+        bt_engine.async_exec(self.dev.disconnect())
+        self.dev = None
+
+    @classmethod
+    def set_model_param(cls, key: str, val: str) -> bool:
+        """
+        Set model specific parameter.
+        Returns True if key / val pair is recognized, False otherwise.
+        """
+        lkey = key.lower()
+        if lkey == 'btname':
+            cls.DEVICE_NAME = val
+            return True
+        return super().set_model_param(key, val)
 
     def __str__(self) -> str:
         return '[' + self.MODEL_NAME + ' BT]'

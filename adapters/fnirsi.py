@@ -187,13 +187,6 @@ class FnirsiBtDevice(BTMixin, Device):
             return ''
         return ('A', 'V')[channel]
 
-    def close(self):
-        """Closes device if its still open"""
-        if self.dev is None:
-            return
-        bt_engine.async_exec(self.dev.disconnect())
-        self.dev = None
-
 
 class FNB48pUsb(FnirsiUsbDevice):
     DEVICE_VID = 0x2e3c

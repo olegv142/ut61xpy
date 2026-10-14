@@ -231,39 +231,51 @@ def device_type(args):
         )
     return None
 
-def open_device(args):
-    """Open USB or BT device"""
-    T = device_type(args)
-    if T is None:
-        return None
-    if args.path:
-        dev = T.open_addr(args.path) if T.IsBT else T.open_path(args.path)
-    else:
-        dev = T.open(args.name) if T.IsBT else T.open(args.VID, args.PID)
-    if dev is None:
-        return None
-    log.info('%s %s at %s', dev, 'open' if args.path else 'found', dev.path)
+def apply_model_params(T, args):
+    """
+    Apply model parameters if any to device type T.
+    Returns the list of instance parameters as (key, val) tuples or None on failure.
+    """
+    inst_params = []
     if args.param:
         for param in args.param:
             kv = param.split('=')
             if len(kv) != 2:
                 log.error('bad param: %s', param)
-                dev.close()
                 return None
-            if not dev.set_param(kv[0].strip(), kv[1].strip()):
-                log.error('unrecognized param: %s', param)
-                dev.close()
-                return None
+            k, v = kv[0].strip(), kv[1].strip()
+            if not T.set_model_param(k, v):
+                inst_params.append((k, v))
+    return inst_params
+
+def open_device(args):
+    """Open device instance"""
+    T = device_type(args)
+    if T is None:
+        return None
+    inst_params = apply_model_params(T, args)
+    if inst_params is None:
+        return None
+    if args.path:
+        dev = T.open_path(args.path)
+    else:
+        dev = T.open()
+    if dev is None:
+        return None
+    log.info('%s %s at %s', dev, 'open' if args.path else 'found', dev.path)
+    for k, v in inst_params:
+        if not dev.set_param(k, v):
+            log.error('unrecognized param: %s=%s', k, v)
+            dev.close()
+            return None
     return dev
 
 def do_list(args):
     T = device_type(args)
-    if not T.IsBT:
-        for path in T.list_paths(args.VID, args.PID):
-            print(path)
-    else:
-        for addr in T.list_addrs(args.name):
-            print(addr)
+    if apply_model_params(T, args) is None:
+        return -1
+    for path in T.list_paths():
+        print(path)
     return 0
 
 def do_once(args):
@@ -570,19 +582,12 @@ def main_impl(argv=None):
 
     parser.set_defaults(func=get_help)
 
-    parser.register('type', 'hex-int', lambda s: int(s, 16))
-    parser.add_argument('--VID', type='hex-int', required=False, metavar='HEX', default=None,
-            help='device vendor id (optional)')
-    parser.add_argument('--PID', type='hex-int', required=False, metavar='HEX', default=None,
-            help='device product id (optional)')
-    parser.add_argument('--path', '--addr', type=str, required=False,
-            help='device path or Bluetooth mac address (optional, auto detect by default)')
-    parser.add_argument('-B', '--bt', action='store_true',
-            help='use Bluetooth for communicating with device')
     parser.add_argument('-M', '--model', type=str, required=False, metavar='NAME', default=None,
             help='device model (optional, default is %s)' % (UT61XpUsbDevice.MODEL_NAME))
-    parser.add_argument('--name', type=str, required=False, default=None,
-            help='set Bluetooth adapter name (optional)')
+    parser.add_argument('-B', '--bt', action='store_true',
+            help='use Bluetooth for communicating with device')
+    parser.add_argument('--path', '--addr', type=str, required=False,
+            help='device path or Bluetooth mac address (optional, auto detect by default)')
     parser.add_argument('--param', type=str, metavar='KEY=VAL', action='append',
             help='optional model specific parameter (may be used multiple times)')
     parser.add_argument('--verbose', action='store_true', help='verbose output')

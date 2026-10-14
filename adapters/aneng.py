@@ -187,12 +187,6 @@ class AnengBtDevice(BTMixin, Device):
             mode += ' LoBatt'
         return mode
 
-    def close(self):
-        """Closes device if its still open"""
-        if self.dev is None:
-            return
-        bt_engine.async_exec(self.dev.disconnect())
-        self.dev = None
 
 if __name__ == '__main__':
     try:
