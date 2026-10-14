@@ -717,7 +717,7 @@ def _main(conn, args, log_queue):
     if log_queue:
         sys.stdout = sys.stderr = open('.logs/dmm_out.log', 'w', encoding='utf-8')
         logger = logging.getLogger()
-        logger.setLevel(logging.INFO)
+        logger.setLevel(logging.DEBUG)
         logger.handlers = []
         handler = logging.handlers.QueueHandler(log_queue)
         logger.addHandler(handler)
