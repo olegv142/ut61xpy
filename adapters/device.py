@@ -121,9 +121,14 @@ class DeviceInstanceMixin:
     def __str__(self) -> str:
         raise NotImplementedError()
 
+    @classmethod
+    def model_info(cls) -> str:
+        """The implementation may redefine this method to provide extended information"""
+        return cls.MODEL_NAME
+
     def get_model(self) -> str:
-        """The implementation may redefine this method to return actual model name"""
-        return self.MODEL_NAME
+        """The implementation may redefine this method to return actual instance model name"""
+        return self.model_info()
 
     @classmethod
     def list_paths(cls) -> list[str]:
@@ -210,15 +215,15 @@ class USBMixin(DeviceInstanceMixin):
         """Opens device instance and returns it"""
         paths = cls.list_paths()
         if not paths:
-            log.error('%s USB device not found', cls.MODEL_NAME)
+            log.error('%s USB device not found', cls.model_info())
             return None
         if len(paths) > 1:
-            log.error('%d %s USB devices found', len(paths), cls.MODEL_NAME)
+            log.error('%d %s USB devices found', len(paths), cls.model_info())
             return None
         return cls.open_path(paths[0])
 
     def __str__(self) -> str:
-        return '[' + self.MODEL_NAME + ' USB]'
+        return '[' + self.model_info() + ' USB]'
 
     @classmethod
     def set_model_param(cls, key: str, val: str) -> bool:
@@ -256,7 +261,7 @@ class HIDMixin(USBMixin):
         try:
             dev.open_path(path)
         except Exception:
-            log.error('failed to open %s USB HID device %s', cls.MODEL_NAME, path)
+            log.error('failed to open %s USB HID device %s', cls.model_info(), path)
             return None
         dev.set_nonblocking(True)
         return dev
@@ -293,7 +298,7 @@ class CDCMixin(USBMixin):
         try:
             return serial.Serial(path, baudrate=cls.BAUD_RATE, timeout=0, write_timeout=cls.WRITE_TIMEOUT)
         except Exception:
-            log.error('failed to open %s USB CDC device %s', cls.MODEL_NAME, path)
+            log.error('failed to open %s USB CDC device %s', cls.model_info(), path)
             return None
 
     @classmethod
@@ -346,10 +351,10 @@ class BTMixin(DeviceInstanceMixin):
         """Opens BT device instance and returns it"""
         addrs = cls.list_addrs()
         if not addrs:
-            log.error('%s BT device not found', cls.MODEL_NAME)
+            log.error('%s BT device not found', cls.model_info())
             return None
         if len(addrs) > 1:
-            log.error('%d %s BT devices found', len(addrs), cls.MODEL_NAME)
+            log.error('%d %s BT devices found', len(addrs), cls.model_info())
             return None
         return cls.open_addr(addrs[0])
 
@@ -377,4 +382,4 @@ class BTMixin(DeviceInstanceMixin):
         return super().set_model_param(key, val)
 
     def __str__(self) -> str:
-        return '[' + self.MODEL_NAME + ' BT]'
+        return '[' + self.model_info() + ' BT]'

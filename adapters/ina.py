@@ -24,6 +24,7 @@ class I2CAdapter:
     # The following should be defined in subcasses
     DEVICE_VID = None
     DEVICE_PID = None
+    NAME = None
 
     def __init__(self, dev):
         """Initialize I2C bus"""
@@ -41,6 +42,7 @@ class FT260Adapter(I2CAdapter):
     """FTDI FT260 I2C adapter class"""
     DEVICE_VID = ft260.DEVICE_VID
     DEVICE_PID = ft260.DEVICE_PID
+    NAME = 'FT260'
 
     def __init__(self, dev):
         self.dev = dev
@@ -56,6 +58,7 @@ class CP2112Adapter(I2CAdapter):
     """Silicon Labs CP2112 I2C adapter class"""
     DEVICE_VID = cp2112.DEVICE_VID
     DEVICE_PID = cp2112.DEVICE_PID
+    NAME = 'CP2112'
 
     def __init__(self, dev):
         self.dev = dev
@@ -101,13 +104,16 @@ class INADevice(Device, HIDMixin):
         lkey = key.lower()
         if lkey == 'i2c':
             uval = val.upper()
-            if uval == 'FT260':
-                cls.set_i2c_adapter(FT260Adapter)
-                return True
-            if uval == 'CP2112':
-                cls.set_i2c_adapter(CP2112Adapter)
-                return True
+            for T in (FT260Adapter, CP2112Adapter):
+                if uval == T.NAME:
+                    cls.set_i2c_adapter(T)
+                    return True
         return super().set_model_param(key, val)
+
+    @classmethod
+    def model_info(cls) -> str:
+        """The implementation may redefine this method to provide extended information"""
+        return cls.MODEL_NAME + '-' + cls.I2C_ADAPTER_TYPE.NAME
 
     def init(self, nchannels: int = 1):
         """

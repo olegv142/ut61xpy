@@ -34,7 +34,7 @@ class SCPIDevice(CDCMixin, Device):
             return self.model
         else:
             self.disconnected = True
-            return self.MODEL_NAME
+            return self.model_info()
 
     def scpi_send(self, cmd):
         try:

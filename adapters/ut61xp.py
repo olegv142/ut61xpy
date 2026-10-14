@@ -224,7 +224,7 @@ class UTBtDevice(BTMixin, UTDevice):
                 await clnt.start_notify(cls.BT_RX_CHAR, inst._notify_cb)
         bt_engine.async_exec(a_connect())
         if not clnt.is_connected:
-            log.error('failed to connect to %s BT device %s', cls.MODEL_NAME, addr)
+            log.error('failed to connect to %s BT device %s', cls.model_info(), addr)
             return None
         return inst
 
