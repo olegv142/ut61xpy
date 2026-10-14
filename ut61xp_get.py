@@ -15,7 +15,7 @@ from adapters.owon import OwonBtDevice
 from adapters.aneng import AnengBtDevice
 from adapters.scpi import SCPIDmm, SCPIPowerSource
 from adapters.fnirsi import FNB48pUsb, FNB48pBt, FNB58Usb, FNB58Bt, FNAC28, FNBC2
-from adapters.ina import INA226FT260Device, INA226CP2112Device
+from adapters.ina import INA226FT260Device, INA226CP2112Device, INA228FT260Device, INA228CP2112Device
 from data_stat import StatCollector, histogram
 from version import version_str
 from datetime import datetime
@@ -32,7 +32,9 @@ _supported_devices = (
     FNB58Usb, FNB58Bt,
     FNAC28, FNBC2,
     INA226FT260Device,
-    INA226CP2112Device
+    INA226CP2112Device,
+    INA228FT260Device,
+    INA228CP2112Device
 )
 
 class Plotter:
@@ -347,7 +349,7 @@ def do_data(args):
         log.info('saving alternative channel to %s', alt_fname)
     update_cfg(args, dev.path, fname, alt_fname)
 
-    out_fmt = '%.3f%s %f'
+    out_fmt = '%.3f%s %g'
     out_file = sys.stdout if not fname else open(fname, 'w')
     alt_file = None if not alt_fname else open(alt_fname, 'w')
     stat = [StatCollector(), StatCollector()]
