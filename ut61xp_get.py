@@ -79,6 +79,13 @@ class Plotter:
         self.init_hot_keys()
         if args.full_screen:
             self.fig.canvas.manager.full_screen_toggle()
+        else:
+            try:
+                wnd = self.fig.canvas.manager.window
+                wnd.attributes('-topmost', True)
+                wnd.attributes('-topmost', False)
+            except AttributeError:
+                pass
 
     @staticmethod
     def init_window_icon(canvas):
