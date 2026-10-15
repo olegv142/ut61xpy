@@ -218,7 +218,7 @@ Some devices need special settings not applicable to other device. There is a sp
 | amode          | INA228 alternative readout mode {cv,vt,tc,ktv,ktt}               | cv              | INA228         |
 
 ## Working with other supported devices
-
+### Specifying device model
 By default, the **ut61xp-get** tool expects the UT61X+ multimeter as the target device. To change this, one should use *-M/--model* option. In case device works via Bluetooth, the *-B* option must be provided with *-M/--model* option. Both options should be specified right after **ut61xp-get** in the command line. The required options for the particular model family are listed in the following table. The last column of the table shows corresponding model label used in **ut61xp-start** GUI frontend application, see [Working with GUI](#working-with-gui).
 
 | Vendor  | Model family                                 | Command line options  | Model label in **ut61xp-start** UI |
