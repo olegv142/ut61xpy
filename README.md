@@ -543,6 +543,54 @@ if el:
     el.close()
 ```
 
+#### Working with INA current & voltage monitors
+While working with INA voltage & current monitors from your scripts its important to setup several important things:
+ - set I2C adapter type unless you are using the default FTDI FT260 board
+ - set shunt resistance unless you have the default 0.1 Ohm shunt
+
+The following code example illustrates reading current and voltage from INA226 module with 15mOhm shunt via CP2112 adapter.
+```python
+from ut61xpy.adapters.ina import INA226Device, CP2112Adapter
+
+if dev := INA226Device.set_i2c_adapter(CP2112Adapter).open():
+    with dev:
+        dev.set_shunt_resistance(.015)
+        dev.init()
+        while dev.is_connected():
+            if data := dev.query_raw():
+                print(
+                    dev.get_value(data, dev.CURR_CHAN), dev.get_mode(data, dev.CURR_CHAN),
+                    dev.get_value(data, dev.VOLT_CHAN), dev.get_mode(data, dev.VOLT_CHAN)
+                )
+            else:
+                break
+```
+
+The INA228 provides addition temperature measuring capabilities. One can even connect K-type termocouple to it instead of the shunt. The following code example illustrates reading voltage, chip temperature and termocouple temperature with such setup. It also illustrates using I2C adapter GPIO by blinking green LED on the CP2112 adapter board.
+```python
+from ut61xpy.adapters.ina import INA228Device, CP2112Adapter
+import cp2112
+
+led_pin = cp2112.GPIO_LED_GREEN
+
+if dev := INA228Device.set_i2c_adapter(CP2112Adapter).open():
+    with dev:
+        dev.init()
+        cp2112.gpio_config(dev.dev, led_pin)
+        led_on = True
+        while dev.is_connected():
+            if data := dev.query_raw():
+                print(
+                    dev.get_value(data, dev.VOLT_CHAN), dev.get_mode(data, dev.VOLT_CHAN),
+                    dev.get_value(data, dev.TEMP_CHAN), dev.get_mode(data, dev.TEMP_CHAN),
+                    dev.get_value(data, dev.KTC_CHAN),  dev.get_mode(data, dev.KTC_CHAN)
+                )
+                cp2112.gpio_set(dev.dev, 0 if led_on else led_pin, led_pin)
+                led_on = not led_on
+            else:
+                break
+```
+
 ## Which multimeter is better and why
 If you don't need exceptional precision, then all multimeters with 6000 counts and more will give you reasonably good results in any mode except for the current measuring. Here we will consider why the current measuring mode is so demanding and why popular UNI-T multimeters are actually the least usable models for this task.
 
