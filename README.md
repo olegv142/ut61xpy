@@ -241,19 +241,19 @@ By default, the **ut61xp-get** tool expects the UT61X+ multimeter as the target 
 |         | INA228 with I2C to USB adapter               | -M INA228             | INA228 USB                         |
 
 ### Working with INA226/228 current & voltage monitors
-The INA226/228 chips are typically sold with shunt already soldered to the board. Yet there are some number of steps required before you can read data from them
- - Choose I2C to USNB adapter board. Currently supported boards are FT260 and CP2112.
- - Connect INA board to I2C USB adapter boards by 4 wires. The GND and VCC signals provide power, SDA and SCL are for I2C bus to read the data.
- - Provide I2C adapter name to the tool as command line option like *--param i2c=CP2112* or by adding *i2c=CP2112* to comma-separated list of key=val pairs in the *device parameters* field of **ut61xp-start** GUI application. This is not necessary if you are using the default FT260 adapter.
- - Setup shunt resistance either by command line option like *--param shunt=.015* or by adding corresponding key=val pair to the *device parameters* field of **ut61xp-start** GUI application. This is not necessary if you have a default 0.1 Ohm shunt or does not want to measure current.
+The INA226/228 chips are typically sold with shunt already soldered to the board. Yet there are some number of steps required before you can read data from them:
+ - Choose I2C to USB adapter board. Currently supported boards are FT260 and CP2112.
+ - Connect INA board to I2C USB adapter board by 4 wires. The GND and VCC signals provide power, SDA and SCL are for I2C bus to read the data.
+ - Provide I2C adapter name to the tool as command line option like *--param i2c=CP2112* or by adding *i2c=CP2112* to the comma-separated list of key=val pairs in the *device parameters* field of **ut61xp-start** application window. This is not necessary if you are using the default FT260 adapter.
+ - Setup shunt resistance either by command line option like *--param shunt=.015* or by adding corresponding key=val pair to the *device parameters* field of **ut61xp-start** application window. This is not necessary if you have a default 0.1 Ohm shunt or does not want to measure current.
 
-At this point you should be able to read current from the INA226/228 board and optionally read voltage from it as alternative measuring channel if you provide *-a/--alt-file* option or check *alternative channel output ..* in **ut61xp-start**.
+At this point you should be able to read current from the INA226/228 board and optionally read voltage from it as alternative measuring channel if you provide *-a/--alt-file* option or check *alternative channel output* field in **ut61xp-start** application window.
 
 Several important things should be noted:
- - The INA module ground (GND) must not be left floating. You should connect it either to the ground of the circuit you are monitoring or to the IN- current measuring terminal (you are not going to measure voltage). Otherwise you can damage the INA module.
- - The USB adapter does not isolate you computer from the circuit being monitored. So if you computer and monitored circuit are not perfectly isolated or the monitored circuit is at dangerous electric potential you must add USB isolation between you computer and I2C to USB adapter.
+ - The INA module ground (GND) must not be left floating. You should connect it either to the ground of the circuit you are monitoring or to the IN- current measuring terminal (if you are not going to measure voltage). Otherwise you can damage the INA module.
+ - The USB adapter does not isolate you computer from the circuit being monitored. So if you computer and monitored circuit are not perfectly isolated or the monitored circuit is at dangerous electric potential you must add USB isolation between your computer and I2C to USB adapter.
 
-The INA228 adds several options to the measuring setup since it has the third channel for chip temperature measuring. The tool can collect data from two measuring channels only. Scripts can read temperature measuring channel directly (see [code examples](#working-with-ina-current-voltage-monitors)). But for saving / plotting any pair of these three channels one can use *amode* parameter (see [Setting device-specific parameters](#setting-device-specific-parameters)). The following table shows possible values of this parameter and their meaning
+The INA228 adds several options to the measuring setup since it has the third channel for chip temperature measuring. The tool can collect data from two measuring channels only. Scripts can read temperature measuring channel directly (see [code examples](#working-with-ina-current--voltage-monitors)). But for saving / plotting any pair of these three channels one can use *amode* parameter (see [Setting device-specific parameters](#setting-device-specific-parameters)). The following table shows possible values of this parameter and their meaning.
 | Alternative readout mode | Primary channel           | Alternative channel |
 |--------------------------|---------------------------|---------------------|
 | cv                       | Current                   | Voltage             |
@@ -262,7 +262,7 @@ The INA228 adds several options to the measuring setup since it has the third ch
 | ktv                      | K-termocouple temperature | Voltage             |
 | ktt                      | K-termocouple temperature | Chip temperature    |
 
-The first readout mode is the default one. The last two modes are special since they provide the possibility to measure temperature with K-termocouple connected in place of the shunt resistor. Its termoelectric potential is measured and combined with chip temperature by the tool to produce the termocouple junction temperature reading. Setting the shunt resistance (which is absent) is not necessary in such usage scenario. The termocouple temperature readings should be accurate down to 0.05°C in the range from -200°C to 1372°C. The scripts are not required to setup alternative readout mode since they can read any measuring channel directly. See termocouple readout [example](#working-with-ina-current-voltage-monitors).
+The first readout mode is the default one. The last two modes are special since they provide the possibility to measure temperature with K-termocouple connected in place of the shunt resistor. Its termoelectric potential is measured and combined with chip temperature by the tool to produce the termocouple junction temperature reading. Setting the shunt resistance (which is absent) is not necessary in such usage scenario. The termocouple temperature readings should be accurate down to 0.05°C in the range from -200°C to 1372°C. The scripts are not required to setup alternative readout mode since they can read any measuring channel directly. See termocouple readout [example](#working-with-ina-current--voltage-monitors).
 
 # Working with GUI
 The GUI workflow is built around **ut61xp-start** script that provides convenient UI for setting **ut61xp-get** options and launching data acquisition in separate processes. The single instance of **ut61xp-start** UI can launch any number of data acquisition processes working in parallel, saving data to separate files and showing collected data in their own data plot windows. The following figure illustrates using data acquisition GUI reading data from 3 multimeters simultaneously on Raspberry Pi5.
