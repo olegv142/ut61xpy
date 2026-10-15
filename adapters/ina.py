@@ -115,7 +115,7 @@ class INADevice(Device, HIDMixin):
         """The implementation may redefine this method to provide extended information"""
         return cls.MODEL_NAME + '-' + cls.I2C_ADAPTER_TYPE.NAME
 
-    def init(self, nchannels: int = 1):
+    def init(self, nchannels: int = NCHANNELS):
         """
         Initialize device setting the number of channels we are going the read.
         Should be called before first query_raw call.
@@ -155,11 +155,12 @@ class INADevice(Device, HIDMixin):
 class INA226Device(INADevice):
     """INA226 16bit current and voltage monitor base class"""
     MODEL_NAME = 'INA226'
+    NCHANNELS = 2
     I2C_ADDR = 64
     CURR_LSB = 2.5e-6
     VOLT_LSB = 1.25e-3
 
-    def init(self, nchannels: int = 1):
+    def init(self, nchannels: int = NCHANNELS):
         INADevice.init(self, nchannels)
         # Set 4 msec conversion time and 4 samples averaging
         self.adapter.i2c_write(self.I2C_ADDR, [0, 0x43, 0xB7])
@@ -234,7 +235,7 @@ class INA228Device(INADevice):
     def set_alt_mode(self, val: str):
         """Set alternative channels order"""
         amode = val.lower()
-        if amode == 'cv': # default current, voltage mode with temperature in the third channel
+        if amode == 'cv': # default current, voltage mode with chip temperature in the third channel
             self.CHAN_REMAP = None
             return True
         if amode == 'vt': # voltage, temperature mode with current in the third channel
@@ -243,9 +244,13 @@ class INA228Device(INADevice):
         if amode == 'tc': # temperature, current mode with voltage in the third channel
             self.CHAN_REMAP = (2, 0, 1)
             return True
-        if amode == 'ktv': # K termocouple temperature, voltage mode
-            self.CHAN_REMAP = (self.KTC_CHAN, 1)
+        if amode == 'ktv': # K termocouple temperature, voltage mode with chip temperature in the third channel
+            self.CHAN_REMAP = (self.KTC_CHAN, 1, 2)
             return True
+        if amode == 'ktt': # K termocouple temperature, chip temperature mode with voltage in the third channel
+            self.CHAN_REMAP = (self.KTC_CHAN, 2, 1)
+            return True
+        return False
 
     def set_param(self, key: str, val: str|float) -> bool:
         """
