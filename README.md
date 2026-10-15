@@ -544,7 +544,7 @@ if el:
 ```
 
 #### Working with INA current & voltage monitors
-While working with INA voltage & current monitors from your scripts its important to setup several important things:
+While working with INA current & voltage monitors from your scripts its necessary to setup several important things:
  - set I2C adapter type unless you are using the default FTDI FT260 board
  - set shunt resistance unless you have the default 0.1 Ohm shunt
 
