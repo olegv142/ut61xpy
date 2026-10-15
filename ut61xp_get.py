@@ -41,7 +41,9 @@ class Plotter:
     dual_with_stat_min_h = 7
 
     def __init__(self, args, dev, stat):
+        import matplotlib
         import matplotlib.pyplot as plt
+        matplotlib.use('TkAgg')
         plt.rcParams["figure.raise_window"] = False
         plt.ion()
         self.plt = plt
@@ -79,13 +81,6 @@ class Plotter:
         self.init_hot_keys()
         if args.full_screen:
             self.fig.canvas.manager.full_screen_toggle()
-        else:
-            try:
-                wnd = self.fig.canvas.manager.window
-                wnd.attributes('-topmost', True)
-                wnd.attributes('-topmost', False)
-            except AttributeError:
-                pass
 
     @staticmethod
     def init_window_icon(canvas):
