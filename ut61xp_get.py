@@ -43,7 +43,10 @@ class Plotter:
     def __init__(self, args, dev, stat):
         import matplotlib
         import matplotlib.pyplot as plt
-        matplotlib.use('TkAgg')
+        try:
+            matplotlib.use('TkAgg')
+        except Exception:
+            pass
         plt.rcParams["figure.raise_window"] = False
         plt.ion()
         self.plt = plt
