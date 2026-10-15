@@ -202,6 +202,21 @@ The configuration tricks shown above work just because the auto-detected device 
 
 Working with Bluetooth adapter conceptually is not different from using USB. Just add *-B/--bt* option right after *ut61xp-get* to force script to use BT adapter. Similar to USB use case the script is able to auto detect BT adapter provided that its powered on and no other adapters are in the accessible range. By means of using the *--cfg-save* option one can save the address of the adapter discovered (which plays the role of USB device path) for the subsequent reuse. One can specify BT address in the command line explicitly via *--path/--addr* option. Opening BT device by its address is significantly faster and more reliable than autodetecting it.
 
+## Setting device-specific parameters
+Some devices needs special setting not applicable to other device. There is a special command line option to setup such parameters *--param*. It should be followed by KEY=VAL pair. To set multiple parameters this option may be used multiple times like *--param KEY1=VAL1 --param KEY2=VAL2 ..*. To setup parameters in **ut61xp-start** [data acquisition launcher GUI](#data-acquisition-launcher) one should use *device parameters* field separating *key=value* pairs by comma. The following table lists all possible parameters and notes where they are applicable. Note that the parameter names are case-insensitive.
+
+| Parameter name | Meaning                                                          | Default         | Applicable to  |
+|----------------|------------------------------------------------------------------|-----------------|----------------|
+| tout           | Data read timeout in seconds                                     | device specific | any device     |
+| vid, pid       | The USB VID, PID numbers in case you need to change default ones | device specific | USB device     |
+| btname         | Bluetooth device name in case you need to change default one     | device specific | BT device      |
+| baud           | The USB CDC device serial baud rate                              | 115200          | USB CDC device |
+| i2c            | I2C to USB adapter for INA device (FT260|CP2112)                 | FT260           | INA226/228     |
+| shunt          | Shunt resistance for INA current & voltage monitors              | 0.1 Ohm         | INA226/228     |
+| range          | INA228 shunt voltage range (0|1)                                 | 0               | INA228         |
+| tempco         | INA228 shunt temperature coefficient                             | 0               | INA228         |
+| amode          | INA228 alternative readout mode (cv|vt|tc|ktv|ktt)               | cv              | INA228         |
+
 ## Working with other supported devices
 
 By default, the **ut61xp-get** tool expects the UT61X+ multimeter as the target device. To change this, one should use *-M/--model* option. In case device works via Bluetooth, the *-B* option must be provided with *-M/--model* option. Both options should be specified right after **ut61xp-get** in the command line. The required options for the particular model family are listed in the following table. The last column of the table shows corresponding model label used in **ut61xp-start** GUI frontend application, see [Working with GUI](#working-with-gui).
