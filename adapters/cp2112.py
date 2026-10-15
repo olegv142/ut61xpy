@@ -113,6 +113,9 @@ GPIO7 = GPIO6 << 1
 # GPIO0 - red   LED, active low
 # GPIO1 - green LED, active low
 
+GPIO_LED_RED   = GPIO0
+GPIO_LED_GREEN = GPIO1
+
 def gpio_config(dev, out_mask: int, push_pull_mask: int = 0xff):
     """
     Set bitmask of output pins and push pull pins. Pins having
