@@ -33,16 +33,18 @@ log = logging.getLogger('APP')
 module_dir = os.path.dirname(os.path.abspath(__file__))
 log_queue = None
 
+MACOS = sys.platform == 'darwin'
+TIGHT = '--tight' in sys.argv[1:]
+
 DEF_FNAME        = 'data/%Y-%m-%d/%H%M%S-${MODEL}.data'
 DEF_ALT_FNAME    = 'data/%Y-%m-%d/%H%M%S-${MODEL}_.data'
 TEXT_ENTRY_WIDTH = len(DEF_ALT_FNAME) + 1
-VERT_PAD         = 1
+VERT_PAD         = 1 if not MACOS else 0
+CHK_VERT_PAD     = VERT_PAD if not MACOS else 3 if not TIGHT else 2
 HORIZ_PAD        = 8
 
-TIGHT = '--tight' in sys.argv[1:]
-
 FONT_SIZE       = 8 if TIGHT else 10
-SMALL_FONT_SIZE = 6 if TIGHT else 9
+SMALL_FONT_SIZE = FONT_SIZE - 1
 
 class LauncherEvent(Enum):
     Created       = 0
@@ -111,7 +113,7 @@ class CheckOption(Setting):
         self.key = option.replace('-', '_')
         self.checked = tk.BooleanVar(value=False)
         control = ttk.Checkbutton(launcher.settings_frame, text=text, variable=self.checked)
-        launcher.pack_control(control, 0, 2)
+        launcher.pack_control(control, 0, 2, pady=CHK_VERT_PAD)
 
     def get_opts(self):
         return [] if not self.checked.get() else ['--' + self.opt]
