@@ -80,7 +80,7 @@ python3 --version
 ```
 
 ## Installing packages
-The code depends on the following packages
+The code depends on the following packages:
  - *hidapi* for accessing USB HID devices
  - *pyserial* for accessing USB serial devices
  - *bleak* for accessing Bluetooth devices
@@ -92,7 +92,7 @@ sudo apt install python3-hidapi python3-serial python3-bleak python3-matplotlib
 ```
 On some systems the package *python3-hid* is available instead of *python3-hidapi*.
 
-With Windows Anaconda distribution you should use pip
+With Windows Anaconda distribution you should use *pip* to install packages
 ```
 pip install hidapi pyserial bleak matplotlib
 ```
@@ -114,6 +114,7 @@ To check the tool is now working you can execute [Acquisition launcher](#data-ac
 ./ut61xp-start
 ```
 The launcher window should appear. If you have compatible multimeter on, you can now try to start collecting data from it.
+On Windows you have to execute *python ut61xp-start* since this system does not support the concept of executable python scripts.
 
 ### Using portable binaries
 Working with sources is the preferred way of using this tool on Linux. On Windows one can just download latest [release](https://github.com/olegv142/ut61xpy/releases) of portable binaries as self-extracting archive, unpack them to readable folder, then go to the *dmm-tools* folder and double click **ut61xp-start** acquisition launcher to start working immediately without any additional installation efforts. See [Working with GUI](#working-with-gui) section for more details. To make your work on Windows more convenient you can go to the *dmm-tools/scripts* folder and double click on the *create_links.bat* and *associate_data.bat* scripts. See [Working with standalone executables](#working-with-standalone-executables) for more details. See also notes about [security concerns](#the-windows-protected-your-pc-warning-always-appears-on-attempt-to-run-self-extracting-distribution-archive) related to this installation method.
