@@ -1,12 +1,12 @@
 # The cross-platform digital multimeter communication and data plotting tool supporting variety of popular UNI-T, OWON, ANENG, ZOTEK, BSIDE multimeters, FNIRSI USB testers and INA226/228 current & voltage monitor boards.
 
-This repository provides simple alternative to vendor data collection programs. It works uniformly on Windows and Linux (not tested on MacOS). One can use it either from command line or GUI. Since the code is written in python it may be easily incorporated onto your complex measuring or automation system. 
+This repository provides simple alternative to vendor data collection programs. It works uniformly on Windows, Linux and MacOS. One can use it either from command line or GUI. Since the code is written in python it may be easily incorporated onto your complex measuring or automation system. 
 
-The project was started as robust and simple tool for reading data from UNI-T UT61E+ multimeter. It was inspired by https://github.com/ljakob/unit_ut61eplus and https://github.com/aroum/unit_ut61eplus_python. Since then the number of other multimeter and USB tester models were supported and the project was extended with the following goals in mind:
+The project was started as robust and simple tool for reading data from UNI-T UT61E+ multimeters. Since then the number of other multimeter and USB tester models were supported and the project was extended with the following goals in mind:
  - keep code as small and simple as possible
  - support for USB and Bluetooth communication channels
  - support for dual channel reading and plotting (DC+AC mode of UT61E+ for ex.)
- - seamless working on Windows and Linux
+ - seamless working on Windows, Linux and MacOS
  - convenient working with several devices simultaneously
  - single CLI tool (**ut61xp-get**) for data collection and visualization
  - simple GUI frontend application (**ut61xp-start**) with the same capabilities as CLI tool
@@ -51,21 +51,69 @@ FNIRSI produces a line of USB testers capable of measuring USB bus voltage, load
 The INA226 and INA228 are high precision digital current and voltage monitor integrated circuits manufactured by Texas Instruments. They are sold by many vendors in a convenient form, soldered to small printed circuit boards with all necessary connectors. The tool is able to collect readings from such boards by means of additional USB to HID adapter. There are two such adapter boards supported. The first one is based on FTDI FT260 chip. Another one is based on Silicon Labs CP2112 chip. These are inexpensive boars sold by many manufacturers. You only have to connect INA board with USB HID adapter board by 4 wires (GND, VCC, SDA, SCL). After that you will have the precision device for measuring current and voltage at the same time. The INA226 is able to deliver 64k counts while INA228 have 1M counts. Both can be read at the rate of around 10 samples per second. The INA228 module provides current measuring resolution outperforming by an order of magnitude the capabilities of any other multimeter at the fraction of their price. Besides at has precision on-chip temperature sensor. By connecting K-type termocouple instead of the current shunt one can utilize INA228 for temperature measuring in the range from -200°C to 1372°C with high resolution. See [Working with INA226/228 current & voltage monitors](#working-with-ina226228-current--voltage-monitors) for more details.
 
 ## Installation
-### Working with sources
+The installation basically involves three steps - getting the source, installing python and installing required packages. Windows users have convenient alternative of using [portable binaries](#using-portable-binaries).
+
+### Getting the source code
 ```
 git clone https://github.com/olegv142/ut61xpy.git
 ```
-
 Alternatively you can download source code archive and unpack it. 
-The code uses *hid/hidapi* package for communicating with USB HID multimeters, *pyserial* package for communicating with USB multimeters using serial protocol, *bleak* package for communicating with Bluetooth multimeters and *matplotlib* package for data chart plotting. They can be installed by various ways depending on you operating system. To install them with pip (Windows/Lunix):
+
+## Installing python
+The easiest way for windows users is to install [Miniconda distribution](https://www.anaconda.com/download/success?reg=skipped-miniconda). Linux typically has python preinstalled. Otherwise, you can install it using the package manager included with your Linux distribution.
+
+On MacOS you typically use Homebrew package manager to install various command line tools. To install it (if not yet installed):
 ```
-pip install hidapi pyserial bleak matplotlib
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+echo 'eval "$(/opt/homebrew/bin/brew shellenv zsh)"' >> ~/.zprofile
+eval "$(/opt/homebrew/bin/brew shellenv zsh)"
 ```
-On Linux you probably have to create virtual environment first or install packages using package manager like the following:
+To install python on MacOS:
+```
+brew install python python-tk
+echo 'export PATH="/usr/local/opt/python/libexec/bin:$PATH"' >> ~/.zshrc
+source ~/.zshrc
+```
+After these steps you can check the python3 is installed:
+```
+python3 --version
+```
+
+## Installing packages
+The code depends on the following packages
+ - *hidapi* for accessing USB HID devices
+ - *pyserial* for accessing USB serial devices
+ - *bleak* for accessing Bluetooth devices
+ - *matplotlib* for data chart plotting
+
+On Linux you probably can install them with the package manager like
 ```
 sudo apt install python3-hidapi python3-serial python3-bleak python3-matplotlib
 ```
-On some systems the package *python3-hid* is available instead of *python3-hidapi*. Note that you don't have to install the particular package unless you are not going to use the corresponding features. In particular, you can use the **ut61xp-get** tool without *matplotlib* package if you are not going to plot data charts. You can work without *bleak* package if you have only USB multimeters and without *hid/hidapi* package if you have only Bluetooth multimeters.
+On some systems the package *python3-hid* is available instead of *python3-hidapi*.
+
+With windows Anaconda distribution you should use pip
+```
+pip install hidapi pyserial bleak matplotlib
+```
+
+On MacOS you should create virtual environment first:
+```
+cd ut61xpy
+python3 -m venv .venv
+source .venv/bin/activate
+```
+This will create virtual environment in the *.venv* folder under *ut61xpy* directory. You will need to activate it by executing *source .venv/bin/activate* before using the tool. Same steps are applicable on Linux in case you don't want or not able to install packages by package manager.
+
+Now can install packages in the virtual environment created by executing
+```
+pip3 install hidapi pyserial bleak matplotlib
+```
+To check the tool is now working you can execute Acquisition launcher
+```
+./ut61xp-start
+```
+The launch window should appear. If you have compatible multimeter on, you can now try to start collecting data from it.
 
 ### Using portable binaries
 Working with sources is the preferred way of using this tool on Linux. On Windows one can just download latest [release](https://github.com/olegv142/ut61xpy/releases) of portable binaries as self-extracting archive, unpack them to readable folder, then go to the *dmm-tools* folder and double click **ut61xp-start** acquisition launcher to start working immediately without any additional installation efforts. See [Working with GUI](#working-with-gui) section for more details. To make your work on windows more convenient you can go to the *dmm-tools/scripts* folder and double click on the *create_links.bat* and *associate_data.bat* scripts. See [Working with standalone executables](#working-with-standalone-executables) for more details. See also notes about [security concerns](#the-windows-protected-your-pc-warning-always-appears-on-attempt-to-run-self-extracting-distribution-archive) related to this installation method.
