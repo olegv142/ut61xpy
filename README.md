@@ -59,7 +59,7 @@ git clone https://github.com/olegv142/ut61xpy.git
 ```
 Alternatively you can download source code archive and unpack it. 
 
-## Installing python
+### Installing python
 The easiest way for Windows users is to install [Miniconda distribution](https://www.anaconda.com/download/success?reg=skipped-miniconda). Linux typically has python preinstalled. Otherwise, you can install it using the package manager included with your Linux distribution.
 
 On MacOS you typically use Homebrew package manager to install various command line tools. To install it (if not yet installed):
@@ -79,7 +79,7 @@ After these steps you can check the python3 is installed:
 python3 --version
 ```
 
-## Installing packages
+### Installing packages
 The code depends on the following packages:
  - *hidapi* for accessing USB HID devices
  - *pyserial* for accessing USB serial devices
