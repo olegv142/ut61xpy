@@ -105,7 +105,7 @@ source .venv/bin/activate
 ```
 This will create virtual environment in the *.venv* folder under *ut61xpy* directory. You will need to activate it by executing *source .venv/bin/activate* before using the tool. Same steps are applicable on Linux in case you don't want or not able to install packages by package manager.
 
-Now can install packages in the virtual environment by executing
+Now you can install packages in the virtual environment by executing
 ```
 pip3 install hidapi pyserial bleak matplotlib
 ```
