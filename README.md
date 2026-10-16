@@ -60,7 +60,7 @@ git clone https://github.com/olegv142/ut61xpy.git
 Alternatively you can download source code archive and unpack it. 
 
 ## Installing python
-The easiest way for windows users is to install [Miniconda distribution](https://www.anaconda.com/download/success?reg=skipped-miniconda). Linux typically has python preinstalled. Otherwise, you can install it using the package manager included with your Linux distribution.
+The easiest way for Windows users is to install [Miniconda distribution](https://www.anaconda.com/download/success?reg=skipped-miniconda). Linux typically has python preinstalled. Otherwise, you can install it using the package manager included with your Linux distribution.
 
 On MacOS you typically use Homebrew package manager to install various command line tools. To install it (if not yet installed):
 ```
@@ -92,7 +92,7 @@ sudo apt install python3-hidapi python3-serial python3-bleak python3-matplotlib
 ```
 On some systems the package *python3-hid* is available instead of *python3-hidapi*.
 
-With windows Anaconda distribution you should use pip
+With Windows Anaconda distribution you should use pip
 ```
 pip install hidapi pyserial bleak matplotlib
 ```
@@ -105,18 +105,18 @@ source .venv/bin/activate
 ```
 This will create virtual environment in the *.venv* folder under *ut61xpy* directory. You will need to activate it by executing *source .venv/bin/activate* before using the tool. Same steps are applicable on Linux in case you don't want or not able to install packages by package manager.
 
-Now can install packages in the virtual environment created by executing
+Now can install packages in the virtual environment by executing
 ```
 pip3 install hidapi pyserial bleak matplotlib
 ```
-To check the tool is now working you can execute Acquisition launcher
+To check the tool is now working you can execute [Acquisition launcher](#data-acquisition-launcher)
 ```
 ./ut61xp-start
 ```
-The launch window should appear. If you have compatible multimeter on, you can now try to start collecting data from it.
+The launcher window should appear. If you have compatible multimeter on, you can now try to start collecting data from it.
 
 ### Using portable binaries
-Working with sources is the preferred way of using this tool on Linux. On Windows one can just download latest [release](https://github.com/olegv142/ut61xpy/releases) of portable binaries as self-extracting archive, unpack them to readable folder, then go to the *dmm-tools* folder and double click **ut61xp-start** acquisition launcher to start working immediately without any additional installation efforts. See [Working with GUI](#working-with-gui) section for more details. To make your work on windows more convenient you can go to the *dmm-tools/scripts* folder and double click on the *create_links.bat* and *associate_data.bat* scripts. See [Working with standalone executables](#working-with-standalone-executables) for more details. See also notes about [security concerns](#the-windows-protected-your-pc-warning-always-appears-on-attempt-to-run-self-extracting-distribution-archive) related to this installation method.
+Working with sources is the preferred way of using this tool on Linux. On Windows one can just download latest [release](https://github.com/olegv142/ut61xpy/releases) of portable binaries as self-extracting archive, unpack them to readable folder, then go to the *dmm-tools* folder and double click **ut61xp-start** acquisition launcher to start working immediately without any additional installation efforts. See [Working with GUI](#working-with-gui) section for more details. To make your work on Windows more convenient you can go to the *dmm-tools/scripts* folder and double click on the *create_links.bat* and *associate_data.bat* scripts. See [Working with standalone executables](#working-with-standalone-executables) for more details. See also notes about [security concerns](#the-windows-protected-your-pc-warning-always-appears-on-attempt-to-run-self-extracting-distribution-archive) related to this installation method.
 
 # Working with command line
 The CLI workflow is built around **ut61xp-get** script which implements several commands for data acquisition, plotting and simple statistic analysis like making histogram and calculating momentums. The script has many command line options that we discuss briefly in the following sections. We first consider working with UNI-T UT61B/D/E+ multimeters via the standard USB HID adapter UT-D09A typically supplied with the device. After that we will consider working via Bluetooth and communicating with other supported multimeter models.
@@ -336,12 +336,12 @@ The **ut61xp-start** has command line option *--tight* that makes it appearance 
 ## Working with standalone executables
 On Windows the *standalone/build_sfx.bat* script builds standalone executables in *standalone/dist/dmm-tools* folder. It then creates a self extracting archive *standalone/dist/dmm-tools-{VERSION}.exe* provided that you have 7-Zip installed. This archive can be extracted to any folder on the target system including the flash drive. The only requirement for the folder where the executable files will be placed is the ability to write to it. Since the application is 'portable' it tends to store all its files next to the executable. The *Program Files* folder on Windows is usually write-protected, so you should choose a different location to store executable files.
 
-The *dmm-tools/scripts* folder contains several *.bat* files that can make setting up your windows environment easier:
+The *dmm-tools/scripts* folder contains several *.bat* files that can make setting up your Windows environment easier:
 
 | Script                 | What it does                                                               |
 |------------------------|----------------------------------------------------------------------------|
-| *create_links.bat*     | creates links to executables and data folder on your windows desktop       |
-| *delete_links.bat*     | removes links from your windows desktop                                    |
+| *create_links.bat*     | creates links to executables and data folder on your Windows desktop       |
+| *delete_links.bat*     | removes links from your Windows desktop                                    |
 | *associate_data.bat*   | associates output files with .data extension with data plotting executable |
 | *deassociate_data.bat* | removes output files association with data plotting executable             |
 | *clear_config.bat*     | drops saved configurations reverting all settings to default values        |
