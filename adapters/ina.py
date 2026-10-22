@@ -4,14 +4,13 @@ Adapters for TI INA226 and INA228 current & voltage monitors
 
 import os
 import sys
-import time
 import logging
 import struct
 from typing import Any
-from collections.abc import Callable
 
 if __package__: sys.path.append(os.path.realpath(os.path.dirname(__file__)))
 
+from device import Device
 from i2c import FT260Adapter, CP2112Adapter, I2CDevice
 import ft260
 import cp2112
@@ -42,7 +41,8 @@ class INADevice(I2CDevice):
                 return True
         except Exception as e:
             log.debug(e, exc_info=True)
-        return Device.set_param(self, key, val)
+            return False
+        return super().set_param(key, val)
 
     def get_mode(self, data, channel: int = 0) -> str:
         """Returns measurement mode and units description string"""
@@ -59,11 +59,11 @@ class INA226Device(INADevice):
     VOLT_LSB = 1.25e-3
 
     def init(self, nchannels: int = NCHANNELS):
-        INADevice.init(self, nchannels)
+        super().init(nchannels)
         # Set 4 msec conversion time and 4 samples averaging
         self.adapter.i2c_write(self.I2C_ADDR, [0, 0x43, 0xB7])
 
-    def query_raw(self, idle_sleep=time.sleep) -> Any|None:
+    def query_raw(self, idle_sleep=None) -> Any|None:
         """
         Query raw data from device. Here we ignore timeout and idle callback args since
         I2C HID adapter normally responds without long waiting. Therefore calling callback
@@ -117,7 +117,7 @@ class INA228Device(INADevice):
     CHAN_REMAP = None
 
     def init(self, nchannels: int = NCHANNELS):
-        INADevice.init(self, nchannels)
+        super().init(nchannels)
         self.adapter.i2c_write(self.I2C_ADDR, [0, 0, 0 if not self.RANGE else 0x10])
         # Set 4 msec conversion time and 4 samples averaging
         self.adapter.i2c_write(self.I2C_ADDR, [1, 0xFF, 0xF9])
@@ -167,9 +167,10 @@ class INA228Device(INADevice):
                 return self.set_alt_mode(val)
         except Exception as e:
             log.debug(e, exc_info=True)
-        return INADevice.set_param(self, key, val)
+            return False
+        return super().set_param(key, val)
 
-    def query_raw(self, idle_sleep=time.sleep) -> Any|None:
+    def query_raw(self, idle_sleep=None) -> Any|None:
         """
         Query raw data from device. Here we ignore timeout and idle callback args since
         I2C HID adapter normally responds without long waiting. Therefore calling callback

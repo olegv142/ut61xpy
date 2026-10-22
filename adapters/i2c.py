@@ -2,11 +2,18 @@
 Bases classes for devices using I2C communication bus
 """
 
+import os
+import sys
+import logging
+from typing import Any
+
 if __package__: sys.path.append(os.path.realpath(os.path.dirname(__file__)))
 
 from device import Device, HIDMixin
 import ft260
 import cp2112
+
+log = logging.getLogger('DEV')
 
 class I2CAdapter:
     """Base class for I2C adapters"""
@@ -64,6 +71,7 @@ class I2CDevice(Device, HIDMixin):
     I2C_ADAPTER_TYPE = FT260Adapter # default i2c adapter
     DEVICE_VID = I2C_ADAPTER_TYPE.DEVICE_VID
     DEVICE_PID = I2C_ADAPTER_TYPE.DEVICE_PID
+    I2C_ADDR = None # must be redefined in subclasses
 
     def __init__(self, *args):
         super().__init__(*args)
@@ -90,6 +98,14 @@ class I2CDevice(Device, HIDMixin):
                 if uval == T.NAME:
                     cls.set_i2c_adapter(T)
                     return True
+            return False
+        if lkey == 'addr':
+            try:
+                cls.I2C_ADDR = int(val, 0)
+                return True
+            except Exception as e:
+                log.debug(e, exc_info=True)
+                return False
         return super().set_model_param(key, val)
 
     @classmethod

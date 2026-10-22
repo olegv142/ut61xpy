@@ -241,6 +241,7 @@ class USBMixin(DeviceInstanceMixin):
                 return True
         except Exception as e:
             log.debug(e, exc_info=True)
+            return False
         return super().set_model_param(key, val)
 
 class HIDMixin(USBMixin):
@@ -314,6 +315,7 @@ class CDCMixin(USBMixin):
                 return True
         except Exception as e:
             log.debug(e, exc_info=True)
+            return False
         return super().set_model_param(key, val)
 
 class BTMixin(DeviceInstanceMixin):
