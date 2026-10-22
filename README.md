@@ -373,6 +373,9 @@ The **ut61xp-start** tool creates several files and directories next to executab
 | .logs/                               | Folder with **ut61xp-start** tool execution logs. One can examine them should something goes wrong or send to the author for analysis. |
 | .internal/                           | Folder containing executable components such as a shared libraries and compiled Python code. |
 
+## Troubleshooting
+If something goes wrong you may consider looking to the logs and/or add *--verbose* option to **ut61xp-get** and **ut61xp-start** command line.
+
 # Known issues and solutions
 
 ### Unable to connect to Bluetooth multimeter after closing **ut61xp-start** application
