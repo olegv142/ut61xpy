@@ -261,6 +261,7 @@ Some devices need special settings not applicable to other device. There is a sp
 | btname         | Bluetooth device name in case you need to change default one     | device specific | BT device      |
 | baud           | The USB CDC device serial baud rate                              | 115200          | USB CDC device |
 | i2c            | I2C to USB adapter for INA device {FT260,CP2112}                 | FT260           | INA226/228     |
+| addr           | I2C address                                                      | device specific | INA226/228     |
 | shunt          | Shunt resistance for INA current & voltage monitors              | 0.1 Ohm         | INA226/228     |
 | range          | INA228 shunt voltage range {0,1}                                 | 0               | INA228         |
 | tempco         | INA228 shunt temperature coefficient                             | 0               | INA228         |
