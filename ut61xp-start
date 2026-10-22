@@ -496,6 +496,8 @@ class Launcher:
         opts = self.collect_opts()
         if opts is None:
             return
+        if '--verbose' in sys.argv[1:]:
+            opts = ['--verbose'] + opts
         self.conn, child_conn = Pipe()
         proc = Process(target=_main, args=(
                 child_conn, opts, log_queue
