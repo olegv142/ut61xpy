@@ -146,7 +146,7 @@ class INA228Device(INADevice):
         """Set shunt temperature coefficient (relative to 25°C)"""
         self.TEMPCO = val
 
-    def set_alt_mode(self, val: str):
+    def set_alt_mode(self, val: str) -> bool:
         """Set alternative channels order"""
         amode = val.lower()
         if amode == 'cv': # default current, voltage mode with chip temperature in the third channel
