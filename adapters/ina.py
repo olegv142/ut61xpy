@@ -59,9 +59,17 @@ class INA226Device(INADevice):
     VOLT_LSB = 1.25e-3
 
     def init(self, nchannels: int = NCHANNELS):
+        """
+        Initialize device setting the number of channels we are going to read.
+        Should be called before the first query_raw call.
+        """
         super().init(nchannels)
-        # Set 4 msec conversion time and 4 samples averaging
-        self.adapter.i2c_write(self.I2C_ADDR, [0, 0x43, 0xB7])
+        try:
+            # Set 4 msec conversion time and 4 samples averaging
+            self.adapter.i2c_write(self.I2C_ADDR, [0, 0x43, 0xB7])
+        except Exception as e:
+            self.disconnected = True
+            log.debug(e, exc_info=True)
 
     def query_raw(self, idle_sleep=None) -> Any|None:
         """
@@ -117,10 +125,18 @@ class INA228Device(INADevice):
     CHAN_REMAP = None
 
     def init(self, nchannels: int = NCHANNELS):
+        """
+        Initialize device setting the number of channels we are going to read.
+        Should be called before the first query_raw call.
+        """
         super().init(nchannels)
-        self.adapter.i2c_write(self.I2C_ADDR, [0, 0, 0 if not self.RANGE else 0x10])
-        # Set 4 msec conversion time and 4 samples averaging
-        self.adapter.i2c_write(self.I2C_ADDR, [1, 0xFF, 0xF9])
+        try:
+            self.adapter.i2c_write(self.I2C_ADDR, [0, 0, 0 if not self.RANGE else 0x10])
+            # Set 4 msec conversion time and 4 samples averaging
+            self.adapter.i2c_write(self.I2C_ADDR, [1, 0xFF, 0xF9])
+        except Exception as e:
+            self.disconnected = True
+            log.debug(e, exc_info=True)
 
     def set_shunt_voltage_range(self, val: int):
         """Set shunt voltage range (0 = ±163.84mV, 1 = ± 40.96mV)"""

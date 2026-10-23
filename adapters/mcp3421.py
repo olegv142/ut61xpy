@@ -19,7 +19,7 @@ import cp2112
 log = logging.getLogger('DEV')
 
 class MCP3421Device(I2CDevice):
-    """INA226 16bit current and voltage monitor base class"""
+    """MCP3421 ADC adapter"""
     MODEL_NAME = 'MCP3421'
     NCHANNELS = 1
     I2C_ADDR = 0x68
@@ -28,7 +28,8 @@ class MCP3421Device(I2CDevice):
     TOUT = .5
     IDLE_DELAY = .1
 
-    def set_gain(self, gain: int):
+    def set_gain(self, gain: int) -> bool:
+        """Set PGA gain"""
         if gain in (1, 2, 4, 8):
             self.GAIN = gain
             return True
@@ -49,31 +50,39 @@ class MCP3421Device(I2CDevice):
         return super().set_param(key, val)
 
     def init(self, nchannels: int = NCHANNELS):
+        """
+        Initialize device setting the number of channels we are going to read.
+        Should be called before the first query_raw call.
+        """
         super().init(nchannels)
         gain = {1: 0, 2: 1, 4: 2, 8: 3}.get(self.GAIN, 0)
         rate = 3 << 2 # 3.75 SPS (18 bits)
         mode = 1 << 4 # continuous
-        self.adapter.i2c_write(self.I2C_ADDR, [gain + rate + mode])
+        try:
+            self.adapter.i2c_write(self.I2C_ADDR, [gain + rate + mode])
+        except Exception as e:
+            self.disconnected = True
+            log.debug(e, exc_info=True)
 
     def query_raw(self, idle_sleep=time.sleep) -> Any|None:
         """Query raw data from device"""
         if not self.is_connected():
             return None
         wait = self.TOUT
-        while True:
-            idle_sleep(self.IDLE_DELAY)
-            try:
+        try:
+            while True:
+                idle_sleep(self.IDLE_DELAY)
                 if (data := self.adapter.i2c_read(self.I2C_ADDR, 4)) is None:
                     return None
                 if not (data[3] & 0x80):
                     return bytes(data[:3]) + b'\0'
-            except Exception as e:
-                self.disconnected = True
-                log.debug(e, exc_info=True)
-                return None
-            wait -= self.IDLE_DELAY
-            if wait <= 0:
-                return None
+                wait -= self.IDLE_DELAY
+                if wait <= 0:
+                    return None
+        except Exception as e:
+            self.disconnected = True
+            log.debug(e, exc_info=True)
+            return None
 
     def get_value(self, data, channel: int = 0) -> float:
         """Converts raw data to the floating point value"""
