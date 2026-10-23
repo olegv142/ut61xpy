@@ -99,14 +99,25 @@ class I2CDevice(Device, HIDMixin):
                     cls.set_i2c_adapter(T)
                     return True
             return False
-        if lkey == 'addr':
-            try:
-                cls.I2C_ADDR = int(val, 0)
-                return True
-            except Exception as e:
-                log.debug(e, exc_info=True)
-                return False
         return super().set_model_param(key, val)
+
+    def set_i2c_addr(self, addr: int):
+        """Set target device address on I2C bus"""
+        self.I2C_ADDR = addr
+
+    def set_param(self, key: str, val: str|float) -> bool:
+        """
+        Set device specific parameter.
+        Returns True if key / val pair is recognized, False otherwise.
+        """
+        try:
+            if key.lower() == 'addr':
+                self.set_i2c_addr(int(val, 0))
+                return True
+        except Exception as e:
+            log.debug(e, exc_info=True)
+            return False
+        return super().set_param(key, val)
 
     @classmethod
     def model_info(cls) -> str:
