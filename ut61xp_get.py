@@ -17,6 +17,7 @@ from adapters.scpi import SCPIDmm, SCPIPowerSource
 from adapters.fnirsi import FNB48pUsb, FNB48pBt, FNB58Usb, FNB58Bt, FNAC28, FNBC2
 from adapters.ina import INA226Device, INA228Device
 from adapters.mcp3421 import MCP3421Device
+from adapters.ads1115 import ADS1115Device
 from data_stat import StatCollector, histogram
 from version import version_str
 from datetime import datetime
@@ -34,7 +35,8 @@ _supported_devices = (
     FNAC28, FNBC2,
     INA226Device,
     INA228Device,
-    MCP3421Device
+    MCP3421Device,
+    ADS1115Device
 )
 
 class Plotter:
@@ -376,8 +378,8 @@ def do_data(args):
         sleep_fn = time.sleep
     errs_max = 2 if not args.bt else 5
     errs_left = errs_max
-    dev.init(2 if alt_file else 1)
     try:
+        dev.init(2 if alt_file else 1)
         start = ts = time.time()
         while True:
             # Query data
