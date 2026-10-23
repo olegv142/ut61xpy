@@ -87,7 +87,7 @@ def i2c_read(dev, address: int, length: int) -> list[int]|None:
         log.error('bad data length reading addr %#x: expects %u, got %u',
             address, length, report[2])
         return None
-    return bytes(report[3:length + 3])
+    return report[3:length + 3]
 
 #
 # GPIO routines
