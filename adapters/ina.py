@@ -244,7 +244,7 @@ if __name__ == '__main__':
     if dev := devT.set_i2c_adapter(CP2112Adapter if '--2112' in sys.argv[1:] else FT260Adapter).open():
         print(dev)
         with dev:
-            dev.init(dev.NCHANNELS)
+            dev.init()
             while dev.is_connected():
                 data = dev.query_raw()
                 print(data, end = '\t')
