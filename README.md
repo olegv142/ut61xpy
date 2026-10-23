@@ -1,4 +1,4 @@
-# A cross-platform tool for recording and plotting digital multimeter data, supporting many popular multimeters from UNI-T, OWON, ANENG, ZOTEK, BSIDE, FNIRSI USB testers, INA226/228 current and voltage monitoring boards, as well as MCP3421 and ADS1115 ADC boards.
+# A cross-platform tool for recording and plotting digital multimeter data, supporting many popular multimeters from UNI-T, OWON, ANENG, ZOTEK, BSIDE, FNIRSI USB testers, INA226/228 current and voltage monitors, as well as MCP3421 and ADS1115 ADC boards.
 
 This repository provides simple alternative to vendor data collection programs. It works uniformly on Windows, Linux and MacOS. One can use it either from command line or GUI. Since the code is written in python it may be easily incorporated onto your complex measuring or automation system. 
 
@@ -260,18 +260,19 @@ Working with Bluetooth adapter conceptually is not different from using USB. Jus
 ## Setting device-specific parameters
 Some devices need special settings not applicable to other device. There is a special command line option to setup such parameters *--param*. It should be followed by KEY=VAL pair. To set multiple parameters this option may be used multiple times like *--param KEY1=VAL1 --param KEY2=VAL2 ..*. To setup parameters in **ut61xp-start** [data acquisition launcher GUI](#data-acquisition-launcher) one should use *device parameters* field separating *key=value* pairs by comma. The following table lists all possible parameters and notes where they are applicable. Note that the parameter names are case-insensitive.
 
-| Parameter name | Meaning                                                          | Default         | Applicable to  |
-|----------------|------------------------------------------------------------------|-----------------|----------------|
-| tout           | Data read timeout in seconds                                     | device specific | any device     |
-| vid, pid       | The USB VID, PID numbers in case you need to change default ones | device specific | USB device     |
-| btname         | Bluetooth device name in case you need to change default one     | device specific | BT device      |
-| baud           | The USB CDC device serial baud rate                              | 115200          | USB CDC device |
-| i2c            | I2C to USB adapter for INA device {FT260,CP2112}                 | FT260           | INA226/228     |
-| addr           | I2C address                                                      | device specific | INA226/228     |
-| shunt          | Shunt resistance for INA current & voltage monitors              | 0.1 Ohm         | INA226/228     |
-| range          | INA228 shunt voltage range {0,1}                                 | 0               | INA228         |
-| tempco         | INA228 shunt temperature coefficient                             | 0               | INA228         |
-| amode          | INA228 alternative readout mode {cv,vt,tc,ktv,ktt}               | cv              | INA228         |
+| Parameter name | Meaning                                                          | Default         | Applicable to   |
+|----------------|------------------------------------------------------------------|-----------------|-----------------|
+| tout           | Data read timeout in seconds                                     | device specific | any device      |
+| vid, pid       | The USB VID, PID numbers in case you need to change default ones | device specific | USB device      |
+| btname         | Bluetooth device name in case you need to change default one     | device specific | BT device       |
+| baud           | The USB CDC device serial baud rate                              | 115200          | USB CDC device  |
+| i2c            | I2C to USB adapter for INA device {FT260,CP2112}                 | FT260           | I2C device      |
+| addr           | I2C address                                                      | device specific | I2C device      |
+| shunt          | Shunt resistance for INA current & voltage monitors              | 0.1 Ohm         | INA226/228      |
+| range          | INA228 shunt voltage range {0,1}                                 | 0               | INA228          |
+| tempco         | INA228 shunt temperature coefficient                             | 0               | INA228          |
+| amode          | INA228 alternative readout mode {cv,vt,tc,ktv,ktt}               | cv              | INA228          |
+| gain           | ADC amplifier gain                                               | 1               | MCP3421,ADS1115 |
 
 ## Working with other supported devices
 ### Specifying device model
@@ -295,6 +296,8 @@ By default, the **ut61xp-get** tool expects the UT61X+ multimeter as the target 
 |         | FNB-C2 USB tester                            | -M FNB-C2             | FNB-C2 USB                         |
 | TI      | INA226 with I2C to USB adapter               | -M INA226             | INA226 USB                         |
 |         | INA228 with I2C to USB adapter               | -M INA228             | INA228 USB                         |
+|         | ADS1115 with I2C to USB adapter              | -M ADS1115            | ADS1115 USB                        |
+| Microchip | MCP3421 with I2C to USB adapter            | -M MCP3421            | MCP3421 USB                        |
 
 ### Working with INA226/228 current & voltage monitors
 The INA226/228 chips are typically sold with shunt already soldered to the board. Yet there are some number of steps required before you can read data from them:
@@ -323,6 +326,11 @@ The first readout mode is the default one. The last two modes are special since 
 Another possible use of the INA228 temperature sensor is shunt temperature compensation. To utilize it one can set *tempco* parameter (see [Setting device-specific parameters](#setting-device-specific-parameters)). After that the current readings will be multiplied by compensation factor 1 + (T - 25) \* tempco, where T is the chip temperature. This does not give you the perfect compensation though since T is not equal to the temperature of the shunt. Increasing the *tempco* to compensate the difference will improve the accuracy provided that the environment temperature is stable.
 
 The full scale shunt voltage measuring range of INA228 is ±163.84mV. It may be reduced by the factor of 4 improving measuring resolution by setting *range* parameter to 1. It can be done in command line by option *--param range=1* or by adding *range=1* to the comma-separated list of parameters in the *device parameters* field of **ut61xp-start** application window.
+
+### Working with MCP3421 ADC boards
+To read the data from MCP3421 Analog to Digital Converter you need to connect I2C adapter board to it similar to the case of INA226/228 boards described above. The MCP3421 has single channel with 18 bits resolution which gives you 131072 counts with positive and negative signs. The AD has full scale range from -2.048V yo +2.048V. The built in programmable gain amplifier (PGA) may be set to amplify signal by the factor of 2, 4 or 8 reducing full scale range accordingly. You can set PGA gain by specifying *gain* parameter either in command line or by option *--param gain=N* or by adding *gain=N* to the comma-separated list of parameters in the *device parameters* field of **ut61xp-start** application window. With maximum gain 8 the ADC has resolution of about 2µV. Therefore you can use it for measuring termocouple voltage in particular.
+
+The MCP3421 has differential input that gives you the possibility to measure negative signals while keeping input voltages within the power rails. Note that similar to INA226/228 case you should avoid inputs floating. They should always have predictable potential with respect to the ground. These potentials should always be kept within the power rails of the board. For example, while measuring termocouple voltage you can connect negative input to the board's ground. The USB isolation may be necessary to decouple system being measured from the computer reading data.
 
 # Working with GUI
 The GUI workflow is built around **ut61xp-start** script that provides convenient UI for setting **ut61xp-get** options and launching data acquisition in separate processes. The single instance of **ut61xp-start** UI can launch any number of data acquisition processes working in parallel, saving data to separate files and showing collected data in their own data plot windows. The following figure illustrates using data acquisition GUI reading data from 3 multimeters simultaneously on Raspberry Pi5.
