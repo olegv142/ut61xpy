@@ -49,7 +49,7 @@ class MCP3421Device(I2CDevice):
             return False
         return super().set_param(key, val)
 
-    def init(self, nchannels: int = NCHANNELS):
+    def init(self, nchannels: int = 1):
         """
         Initialize device setting the number of channels we are going to read.
         Should be called before the first query_raw call.

@@ -124,13 +124,25 @@ class I2CDevice(Device, HIDMixin):
         """The implementation may redefine this method to provide extended information"""
         return cls.MODEL_NAME + '-' + cls.I2C_ADAPTER_TYPE.NAME
 
-    def init(self, nchannels: int = 1):
+    def init(self, nchannels):
         """
         Initialize device setting the number of channels we are going the read.
         Should be called before first query_raw call.
         """
         self.channels = nchannels
-        self.adapter = self.I2C_ADAPTER_TYPE(self.dev)
+        if self.adapter is None:
+            self.adapter = self.I2C_ADAPTER_TYPE(self.dev)
+
+    @classmethod
+    def attach_to_i2c_bus(cls, master: I2CDevice):
+        """
+        Create device attaching it to already initialized I2C bus.
+        The master device init() should be already called at this point.
+        """
+        assert master.adapter is not None
+        dev = cls(master.dev, master.path)
+        dev.adapter = master.adapter
+        return dev
 
     def get_channels(self, data: Any) -> int:
         """Get the number of channels contained in the raw data"""
