@@ -702,6 +702,8 @@ if dev := INA228Device.set_i2c_adapter(CP2112Adapter).open():
 ```
 
 ### Reading data from several I2C devices on the same bus
+The I2CDevice base class adds an important method to its descendants - attach_to_i2c_bus. It creates device instance by attaching it to existing I2C bus given the initialized instance of another 'master' device already sitting on the bus. No USB device discovery is necessary for the new device creation. It just uses already initialized USB device of the master. This method is useful in case you are going to read data from multiple devices sharing the same I2C bus and USB adapter. The following code example illustrates reading the data from 
+ADS1115 and MCP3421 devices sharing the same bus.
 ```
 from ut61xpy.adapters.ads1115 import ADS1115Device
 from ut61xpy.adapters.mcp3421 import MCP3421Device
@@ -722,6 +724,7 @@ if dev1 := ADS1115Device.set_i2c_adapter(FT260Adapter).open():
             else:
                 break
 ```
+Note that devices sharing the same bus should have different bus addresses to avoid conflicts. The MCP3421 has bus address programmed on the factory so its hard to have more than one such device on the bus. The ADS1115 may be configured to use 4 different addresses so you can attach 4 such devices to the same bus. Look at the particular device datashit for more details.
 
 ## Which multimeter is better and why
 If you don't need exceptional precision, then all multimeters with 6000 counts and more will give you reasonably good results in any mode except for the current measuring. Here we will consider why the current measuring mode is so demanding and why popular UNI-T multimeters are actually the least usable models for this task.
