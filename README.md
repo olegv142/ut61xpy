@@ -341,6 +341,7 @@ To read the data from ADS1115 Analog to Digital Converter you need to connect it
  - input multiplexer that allows you to sample up to 4 input signals
  - configurable I2C bus address so you can attach up to 4 such devices to the same I2C adapter
 The input multiplexer configuration can be set by *mux* parameter either in command line or by option *--param mux=M* or by adding *mux=M* to the comma-separated list of parameters in the *device parameters* field of **ut61xp-start** application window. By default device is using its AIN0 as positive terminal and AIN1 as negative input voltage terminal. The following table illustrates possible values of the *mux* parameter and their meaning
+
 | mux parameter | positive terminal | negative terminal |
 |---------------|-------------------|-------------------|
 | 0             | AIN0              | AIN1              |
@@ -353,6 +354,7 @@ The input multiplexer configuration can be set by *mux* parameter either in comm
 | 7             | AIN3              | GND               |
 
 The *gain* parameter should be used to specify ADC preamplifier gain which affects full scale range and resolution as shown in the following table
+
 | gain parameter | full scale range (V) | resolution (µV) |
 |----------------|----------------------|-----------------|
 | 0              | 6.144                | 187.5           |
@@ -361,6 +363,7 @@ The *gain* parameter should be used to specify ADC preamplifier gain which affec
 | 4              | 1.024                | 31.25           |
 | 8              | 0.512                | 15.625          |
 | 16             | 0.256                | 7.8125          |
+
 The default value of the *gain* is 0 so that ADS1115 will use its full scale range of 6.144V.
 
 In case you are going to read alternative data channel you may configure its multiplexing and gain by specifying *amux* and *again* parameters. So you will be able to sample and plot two voltage sources connected to different ADS1115 inputs. The default value of *again* is 0 (full scale range of 6.144V). The default *amux* is 7 so you will sample AIN3 input relative to the ground.
