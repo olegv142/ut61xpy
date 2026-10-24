@@ -701,6 +701,28 @@ if dev := INA228Device.set_i2c_adapter(CP2112Adapter).open():
                 break
 ```
 
+### Reading data from several I2C devices on the same bus
+```
+from ut61xpy.adapters.ads1115 import ADS1115Device
+from ut61xpy.adapters.mcp3421 import MCP3421Device
+from ut61xpy.adapters.i2c import FT260Adapter
+
+if dev1 := ADS1115Device.set_i2c_adapter(FT260Adapter).open():
+    with dev1:
+        dev1.init(2)
+        dev2 = MCP3421Device.attach_to_i2c_bus(dev1)
+        dev2.init()
+        while dev1.is_connected() and dev2.is_connected():
+            if (data1 := dev1.query_raw()) and (data2 := dev2.query_raw()):
+                print(
+                    dev1.get_value(data1, 0), dev1.get_mode(data1, 0),
+                    dev1.get_value(data1, 1), dev1.get_mode(data1, 1),
+                    dev2.get_value(data2), dev2.get_mode(data2)
+                )
+            else:
+                break
+```
+
 ## Which multimeter is better and why
 If you don't need exceptional precision, then all multimeters with 6000 counts and more will give you reasonably good results in any mode except for the current measuring. Here we will consider why the current measuring mode is so demanding and why popular UNI-T multimeters are actually the least usable models for this task.
 
