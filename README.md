@@ -260,19 +260,22 @@ Working with Bluetooth adapter conceptually is not different from using USB. Jus
 ## Setting device-specific parameters
 Some devices need special settings not applicable to other device. There is a special command line option to setup such parameters *--param*. It should be followed by KEY=VAL pair. To set multiple parameters this option may be used multiple times like *--param KEY1=VAL1 --param KEY2=VAL2 ..*. To setup parameters in **ut61xp-start** [data acquisition launcher GUI](#data-acquisition-launcher) one should use *device parameters* field separating *key=value* pairs by comma. The following table lists all possible parameters and notes where they are applicable. Note that the parameter names are case-insensitive.
 
-| Parameter name | Meaning                                                          | Default         | Applicable to   |
-|----------------|------------------------------------------------------------------|-----------------|-----------------|
-| tout           | Data read timeout in seconds                                     | device specific | any device      |
-| vid, pid       | The USB VID, PID numbers in case you need to change default ones | device specific | USB device      |
-| btname         | Bluetooth device name in case you need to change default one     | device specific | BT device       |
-| baud           | The USB CDC device serial baud rate                              | 115200          | USB CDC device  |
-| i2c            | I2C to USB adapter for INA device {FT260,CP2112}                 | FT260           | I2C device      |
-| addr           | I2C address                                                      | device specific | I2C device      |
-| shunt          | Shunt resistance for INA current & voltage monitors              | 0.1 Ohm         | INA226/228      |
-| range          | INA228 shunt voltage range {0,1}                                 | 0               | INA228          |
-| tempco         | INA228 shunt temperature coefficient                             | 0               | INA228          |
-| amode          | INA228 alternative readout mode {cv,vt,tc,ktv,ktt}               | cv              | INA228          |
-| gain           | ADC amplifier gain                                               | 1               | MCP3421,ADS1115 |
+| Parameter name | Meaning                                                          | Default         | Applicable to    |
+|----------------|------------------------------------------------------------------|-----------------|------------------|
+| tout           | Data read timeout in seconds                                     | device specific | any device       |
+| vid, pid       | The USB VID, PID numbers in case you need to change default ones | device specific | USB device       |
+| btname         | Bluetooth device name in case you need to change default one     | device specific | BT device        |
+| baud           | The USB CDC device serial baud rate                              | 115200          | USB CDC device   |
+| i2c            | I2C to USB adapter for INA device {FT260,CP2112}                 | FT260           | I2C device       |
+| addr           | I2C address                                                      | device specific | I2C device       |
+| shunt          | Shunt resistance for INA current & voltage monitors              | 0.1 Ohm         | INA226/228       |
+| range          | INA228 shunt voltage range {0,1}                                 | 0               | INA228           |
+| tempco         | INA228 shunt temperature coefficient                             | 0               | INA228           |
+| amode          | INA228 alternative readout mode {cv,vt,tc,ktv,ktt}               | cv              | INA228           |
+| gain           | ADC amplifier gain                                               | device specific | MCP3421, ADS1115 |
+| mux            | ADC input multiplexer configuration                              | 0               | ADS1115          |
+| again          | Alternative channel ADC amplifier gain                           | 0               | ADS1115          |
+| amux           | Alternative channel ADC input multiplexer configuration          | 7               | ADS1115          |
 
 ## Working with other supported devices
 ### Specifying device model
@@ -328,9 +331,39 @@ Another possible use of the INA228 temperature sensor is shunt temperature compe
 The full scale shunt voltage measuring range of INA228 is ±163.84mV. It may be reduced by the factor of 4 improving measuring resolution by setting *range* parameter to 1. It can be done in command line by option *--param range=1* or by adding *range=1* to the comma-separated list of parameters in the *device parameters* field of **ut61xp-start** application window.
 
 ### Working with MCP3421 ADC boards
-To read the data from MCP3421 Analog to Digital Converter you need to connect I2C adapter board to it similar to the case of INA226/228 boards described above. The MCP3421 has single channel with 18 bits resolution which gives you 131072 counts with positive and negative signs. The ADC has full scale range from -2.048V yo +2.048V. The built in programmable gain amplifier (PGA) may be set to amplify signal by the factor of 2, 4 or 8 reducing full scale range accordingly. You can set PGA gain by specifying *gain* parameter either in command line or by option *--param gain=N* or by adding *gain=N* to the comma-separated list of parameters in the *device parameters* field of **ut61xp-start** application window. With maximum gain 8 the ADC has resolution of about 2µV. Therefore you can use it for measuring termocouple voltage in particular.
+To read the data from MCP3421 Analog to Digital Converter you need to connect it to I2C adapter board similar to the case of INA226/228 boards described above. The MCP3421 has single channel with 18 bits resolution which gives you 131072 counts with positive and negative signs. The ADC has full scale range from -2.048V yo +2.048V. The built in programmable gain amplifier (PGA) may be set to amplify signal by the factor of 2, 4 or 8 reducing full scale range accordingly. You can set PGA gain by specifying *gain* parameter either in command line or by option *--param gain=N* or by adding *gain=N* to the comma-separated list of parameters in the *device parameters* field of **ut61xp-start** application window. With maximum gain 8 the ADC has resolution of about 2µV. Therefore you can use it for measuring termocouple voltage in particular. The default value of the *gain* is 1 so that MCP3421 will use its full scale range of 2.048V.
 
 The MCP3421 has differential input that gives you the possibility to measure negative signals while keeping input voltages within the power rails. Note that similar to INA226/228 case you should avoid inputs floating. They should always have predictable potential with respect to the ground. These potentials should always be kept within the power rails of the board. For example, while measuring termocouple voltage you can connect negative input to the board's ground. The USB isolation may be necessary to decouple system being measured from the computer reading the data.
+
+### Working with ADS1115 ADC boards
+To read the data from ADS1115 Analog to Digital Converter you need to connect it to I2C adapter board similar to the case of INA226/228 and MCP3421 boards described above. The ADS1115 has 16 bits resolution which gives you 32768 counts with positive and negative signs. Despite lower resolution than MCP3421 it has its own benefits that could make it the preferred choice:
+ - wider full scale range up to 6.144V
+ - input multiplexer that allows you to sample up to 4 input signals
+ - configurable I2C bus address so you can attach up to 4 such devices to the same I2C adapter
+The input multiplexer configuration can be set by *mux* parameter either in command line or by option *--param mux=M* or by adding *mux=M* to the comma-separated list of parameters in the *device parameters* field of **ut61xp-start** application window. By default device is using its AIN0 as positive terminal and AIN1 as negative input voltage terminal. The following table illustrates possible values of the *mux* parameter and their meaning
+| mux parameter | positive terminal | negative terminal |
+|---------------|-------------------|-------------------|
+| 0             | AIN0              | AIN1              |
+| 1             | AIN0              | AIN3              |
+| 2             | AIN1              | AIN3              |
+| 3             | AIN2              | AIN3              |
+| 4             | AIN0              | GND               |
+| 5             | AIN1              | GND               |
+| 6             | AIN2              | GND               |
+| 7             | AIN3              | GND               |
+
+The *gain* parameter should be used to specify ADC preamplifier gain which affects full scale range and resolution as shown in the following table
+| gain parameter | full scale range (V) | resolution (µV) |
+|----------------|----------------------|-----------------|
+| 0              | 6.144                | 187.5           |
+| 1              | 4.096                | 125             |
+| 2              | 2.048                | 62.5            |
+| 4              | 1.024                | 31.25           |
+| 8              | 0.512                | 15.625          |
+| 16             | 0.256                | 7.8125          |
+The default value of the *gain* is 0 so that ADS1115 will use its full scale range of 6.144V.
+
+In case you are going to read alternative data channel you may configure its multiplexing and gain by specifying *amux* and *again* parameters. So you will be able to sample and plot two voltage sources connected to different ADS1115 inputs. The default value of *again* is 0 (full scale range of 6.144V). The default *amux* is 7 so you will sample AIN3 input relative to the ground.
 
 # Working with GUI
 The GUI workflow is built around **ut61xp-start** script that provides convenient UI for setting **ut61xp-get** options and launching data acquisition in separate processes. The single instance of **ut61xp-start** UI can launch any number of data acquisition processes working in parallel, saving data to separate files and showing collected data in their own data plot windows. The following figure illustrates using data acquisition GUI reading data from 3 multimeters simultaneously on Raspberry Pi5.
