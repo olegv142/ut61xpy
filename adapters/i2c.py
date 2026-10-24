@@ -134,11 +134,12 @@ class I2CDevice(Device, HIDMixin):
             self.adapter = self.I2C_ADAPTER_TYPE(self.dev)
 
     @classmethod
-    def attach_to_i2c_bus(cls, master: I2CDevice):
+    def attach_to_i2c_bus(cls, master: 'I2CDevice') -> 'I2CDevice':
         """
         Create device attaching it to already initialized I2C bus.
         The master device init() should be already called at this point.
         """
+        assert isinstance(master, I2CDevice)
         assert master.adapter is not None
         dev = cls(master.dev, master.path)
         dev.adapter = master.adapter
