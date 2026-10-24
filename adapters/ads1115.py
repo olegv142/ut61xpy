@@ -23,15 +23,26 @@ class ADS1115Device(I2CDevice):
     MODEL_NAME = 'ADS1115'
     NCHANNELS  = 2
     I2C_ADDR   = 0x48
-    GAIN       = [0, 0]
-    MUX        = [0, 7]
     TOUT       = .5
     IDLE_DELAY = .05
+    # Mux configuration values
+    MUX_0_1 = 0 # AINP = AIN0 and AINN = AIN1
+    MUX_0_3 = 1 # AINP = AIN0 and AINN = AIN3
+    MUX_1_3 = 2 # AINP = AIN1 and AINN = AIN3
+    MUX_2_3 = 3 # AINP = AIN2 and AINN = AIN3
+    MUX_0_G = 4 # AINP = AIN0 and AINN = GND
+    MUX_1_G = 5 # AINP = AIN1 and AINN = GND
+    MUX_2_G = 6 # AINP = AIN2 and AINN = GND
+    MUX_3_G = 7 # AINP = AIN3 and AINN = GND
+    # The mux and gain for two possible readout channels
+    GAIN = [0, 0]
+    MUX  = [MUX_0_1, MUX_3_G]
 
     def set_gain(self, gain: int, chan: int = 0) -> bool:
         """
-        Set PGA gain. The full scale range is 4.096V / gain except for
-        the gain 0 where it equals to 6.144V (so actual gain = 2/3).
+        Set PGA gain for the given readout channel. The full scale range is
+        4.096V / gain except for the gain 0 where it equals to 6.144V
+        (so actual gain = 2/3).
         """
         assert 0 <= chan < self.NCHANNELS
         if gain in (0, 1, 2, 4, 8, 16):
@@ -40,17 +51,7 @@ class ADS1115Device(I2CDevice):
         return False
 
     def set_mux(self, mux: int, chan: int = 0) -> bool:
-        """
-        Set input MUX configuration:
-          0 : AINP = AIN0 and AINN = AIN1
-          1 : AINP = AIN0 and AINN = AIN3
-          2 : AINP = AIN1 and AINN = AIN3
-          3 : AINP = AIN2 and AINN = AIN3
-          4 : AINP = AIN0 and AINN = GND
-          5 : AINP = AIN1 and AINN = GND
-          6 : AINP = AIN2 and AINN = GND
-          7 : AINP = AIN3 and AINN = GND
-        """
+        """Set input MUX configuration for the given readout channel"""
         assert 0 <= chan < self.NCHANNELS
         if 0 <= mux < 8:
             self.MUX[chan] = mux
