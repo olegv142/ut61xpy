@@ -763,6 +763,28 @@ if dev1 := ADS1115Device.set_i2c_adapter(FT260Adapter).open():
 ```
 Note that devices sharing the same bus should have different bus addresses to avoid conflicts. The MCP3421 has bus address programmed on the factory so its hard to have more than one such device on the bus. The ADS1115 may be configured to use 4 different addresses so you can attach 4 such devices to the same bus. Look at the particular device datashit for more details.
 
+### Measuring multiple voltages by ADS1115 with external multiplexer
+By attaching external multiplexer to ADS1115 you can create device able to measure multiple voltages sequentially. The example of such device is shown below.
+
+![ADS1115 with external multiplexer schematic](/misc/ads1115_mux.png)
+
+The example schematic uses resistor dividers to translate input voltage either positive or negative to the range acceptable for ADS1115 (within its power rails). The following code example illustrates sampling input voltages with such device:
+```python
+from ut61xpy.adapters.ads1115 import ADS1115Device
+from ut61xpy.adapters.ads1115_mux import *
+
+if dev := ADS1115Device.open():
+    with dev:
+        dev.init()
+        while dev.is_connected():
+            print(
+                mux_read_positive(dev, channel=0, div=.5),
+                mux_read_negative(dev, channel=3, div=.5)
+            )
+
+```
+See [ads1115_mux.py](adapters/ads1115_mux.py) for more implementation details.
+
 ## Which multimeter is better and why
 If you don't need exceptional precision, then all multimeters with 6000 counts and more will give you reasonably good results in any mode except for the current measuring. Here we will consider why the current measuring mode is so demanding and why popular UNI-T multimeters are actually the least usable models for this task.
 
