@@ -165,6 +165,11 @@ class DeviceInstanceMixin:
         self.close()
 
     @classmethod
+    def clone(cls):
+        """Clone device type so it can be customized without affecting another instances"""
+        return type(cls.__name__, cls.__bases__, dict(cls.__dict__))
+
+    @classmethod
     def set_model_param(cls, key: str, val: str) -> bool:
         """
         Set model specific parameter.

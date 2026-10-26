@@ -243,6 +243,7 @@ def apply_model_params(T, args):
     """
     inst_params = []
     if args.param:
+        T = T.clone()
         for param in args.param:
             kv = param.split('=')
             if len(kv) != 2:
