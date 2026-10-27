@@ -25,23 +25,31 @@ def channel_to_gpio_bits(channel: int) -> int:
         val += ft260.GPIOE
     return val
 
-def mux_read_positive(dev: ADS1115Device, channel: int, div: float, gain: int = 0) -> float:
+def mux_read_positive(dev: ADS1115Device,
+        channel: int, div: float, gain: int = 0,
+        xgpio: int = 0, xgpio_mask: int = 0
+    ) -> float:
     """
     Sample the particular positive channel (0..15) given the input divider ratio
     calculated as R0 / (R0 + R1), see schematic. To improve precision you can set
-    gain to 1 if VCC <= 4V.
+    gain to 1 if VCC <= 4V. The xgpio and xgpio_mask parameters can be used to
+    control additional GPIO pins of the FT260 chip.
     """
-    ft260.gpio_set(dev.dev, MUX_GPIO_MASK, channel_to_gpio_bits(channel))
+    ft260.gpio_set(dev.dev, MUX_GPIO_MASK + xgpio_mask, channel_to_gpio_bits(channel) + xgpio)
     val = dev.exec_conversion(dev.MUX_1_G, gain)
     return val / div
 
-def mux_read_negative(dev: ADS1115Device, channel: int, div: float, gain: int = 0) -> float:
+def mux_read_negative(dev: ADS1115Device,
+        channel: int, div: float, gain: int = 0,
+        xgpio: int = 0, xgpio_mask: int = 0
+    ) -> float:
     """
     Sample the particular negative voltage channel (0..15) given the input divider ratio
     calculated as R0 / (R0 + R2), see schematic. To improve precision you can set
-    gain to 1 if VCC <= 4V.
+    gain to 1 if VCC <= 4V. The xgpio and xgpio_mask parameters can be used to
+    control additional GPIO pins of the FT260 chip.
     """
-    ft260.gpio_set(dev.dev, MUX_GPIO_MASK, channel_to_gpio_bits(channel))
+    ft260.gpio_set(dev.dev, MUX_GPIO_MASK + xgpio_mask, channel_to_gpio_bits(channel) + xgpio)
     vcc = dev.exec_conversion(dev.MUX_0_G, gain)
     val = dev.exec_conversion(dev.MUX_0_1, gain)
     return vcc - val / div
