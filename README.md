@@ -313,7 +313,7 @@ At this point you should be able to read current from the INA226/228 board and o
 
 Several important things should be noted:
  - The INA module ground (GND) must not be left floating. You should connect it either to the ground of the circuit you are monitoring or to the IN- current measuring terminal. Otherwise you can damage the INA module.
- - The USB adapter does not isolate your computer from the circuit being monitored. So if your computer and monitored circuit are not perfectly isolated or the monitored circuit is at dangerous electric potential you must add USB isolation between your computer and I2C to USB adapter.
+ - The USB adapter does not isolate your computer from the circuit being monitored. So if your computer and monitored circuit are not perfectly isolated or the monitored circuit is at dangerous electric potential you must add USB isolation between your computer and I2C to USB adapter. Another option is to add isolation at the I2C bus between USB adapter and INA chip. To achieve such isolation, one can use, for example, the ISO1540 chip, which is also available as ready-to-use modules.
 
 The INA228 adds several options to the measuring setup since it has the third channel for chip temperature measuring. The tool can collect data from two measuring channels only. Scripts can read temperature measuring channel directly (see [code examples](#working-with-ina-current--voltage-monitors)). But for saving / plotting any pair of these three channels one can use *amode* parameter (see [Setting device-specific parameters](#setting-device-specific-parameters)). The following table shows possible values of this parameter and their meaning.
 | Alternative readout mode | Primary channel           | Alternative channel |
