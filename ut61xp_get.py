@@ -243,23 +243,24 @@ def apply_model_params(T, args):
     """
     inst_params = []
     if args.param:
+        T = T.clone()
         for param in args.param:
             kv = param.split('=')
             if len(kv) != 2:
                 log.error('bad param: %s', param)
-                return None
+                return None, None
             k, v = kv[0].strip(), kv[1].strip()
             if not T.set_model_param(k, v):
                 inst_params.append((k, v))
-    return inst_params
+    return T, inst_params
 
 def open_device(args):
     """Open device instance"""
     T = device_type(args)
     if T is None:
         return None
-    inst_params = apply_model_params(T, args)
-    if inst_params is None:
+    T, inst_params = apply_model_params(T, args)
+    if T is None:
         return None
     if args.path:
         dev = T.open_path(args.path)
@@ -277,7 +278,8 @@ def open_device(args):
 
 def do_list(args):
     T = device_type(args)
-    if apply_model_params(T, args) is None:
+    T, params = apply_model_params(T, args)
+    if T is None:
         return -1
     for path in T.list_paths():
         print(path)
