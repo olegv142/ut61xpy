@@ -255,7 +255,13 @@ class HIDMixin(USBMixin):
     def list_paths(cls) -> list[str]:
         """Returns the list of HID device paths"""
         import_hid()
-        return [dev['path'].decode('ascii') for dev in hid.enumerate(cls.DEVICE_VID, cls.DEVICE_PID)]
+        devs = hid.enumerate(cls.DEVICE_VID, cls.DEVICE_PID)
+        if len(devs) > 1:
+            devs0 = [dev for dev in devs if dev.get('interface_number', 0) == 0]
+            if len(devs0) == 1:
+                log.warning('interface #0 selected among %d devices', len(devs))
+                devs = devs0
+        return [dev['path'].decode('ascii') for dev in devs]
 
     @classmethod
     def _open_path(cls, path: str) -> 'hid.device'|None:
