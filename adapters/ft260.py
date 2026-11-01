@@ -100,6 +100,12 @@ def i2c_read(dev, address: int, length: int, flags: int = FL_START_STOP) -> list
         return None
     return report[2:2 + length]
 
+def i2c_probe(dev, address: int):
+    dev.write([0xC2, address, FL_START_STOP, 1, 0])
+    report = read_packet(dev, 0xD0)
+    sta = i2c_wait_idle(dev)
+    return not (sta & STA_NACK_ADDR)
+
 #
 # GPIO routines
 #
@@ -171,21 +177,31 @@ def gpio_setup_pinG(dev):
     dev.send_feature_report([0xA1, 9, 0])
 
 if __name__ == '__main__':
-    # GPIO pins toggling test
     import hid
+
+    def test_gpio(dev):
+        """GPIO pins toggling test"""
+        out_pins = GPIO2|GPIO4|GPIO5|GPIOA|GPIOB|GPIOC|GPIOD|GPIOE|GPIOF|GPIOG|GPIOH
+        gpio_setup_pin2(dev)
+        gpio_setup_pinA(dev)
+        gpio_setup_pinG(dev)
+        while True:
+            out_bits = out_pins & ~GPIOD
+            gpio_set(dev, out_pins, out_bits)
+            assert gpio_get(dev) & out_pins == out_bits
+            time.sleep(1)
+            out_bits = GPIOD
+            gpio_set(dev, out_pins, out_bits)
+            assert gpio_get(dev) & out_pins == out_bits
+            time.sleep(1)
+            print('.', end='', flush=True)
+
+    def test_scan(dev):
+        """Scan bus for devices"""
+        for addr in range(8, 128):
+            print(('%02x ' % addr) if i2c_probe(dev, addr) else '-- ', end='' if (addr + 1) % 8 else '\n')
+
     dev = hid.device()
     dev.open(DEVICE_VID, DEVICE_PID)
-    out_pins = GPIO2|GPIO4|GPIO5|GPIOA|GPIOB|GPIOC|GPIOD|GPIOE|GPIOF|GPIOG|GPIOH
-    gpio_setup_pin2(dev)
-    gpio_setup_pinA(dev)
-    gpio_setup_pinG(dev)
-    while True:
-        out_bits = out_pins & ~GPIOD
-        gpio_set(dev, out_pins, out_bits)
-        assert gpio_get(dev) & out_pins == out_bits
-        time.sleep(1)
-        out_bits = GPIOD
-        gpio_set(dev, out_pins, out_bits)
-        assert gpio_get(dev) & out_pins == out_bits
-        time.sleep(1)
-        print('.', end='', flush=True)
+    test_scan(dev)
+    test_gpio(dev)
