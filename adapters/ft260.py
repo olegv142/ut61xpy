@@ -1,6 +1,7 @@
 """
 FTDI FT260 adapter I2C and GPIO communication routines
 See https://ftdichip.com/wp-content/uploads/2025/04/AN_394_User_Guide_for_FT260.pdf
+https://ftdichip.com/wp-content/uploads/2026/05/TN_189-FT260-Errata-Technical-Note.pdf
 """
 
 import time
@@ -12,10 +13,12 @@ DEVICE_VID = 0x403
 DEVICE_PID = 0x6030
 
 # I2C transaction flags
-FL_START = 2
-FL_REPEATED_START = 3
-FL_STOP  = 4
+FL_RESTART = 1
+FL_START   = 2
+FL_STOP    = 4
 FL_START_STOP = FL_START | FL_STOP
+FL_REPEATED_START = FL_START | FL_RESTART
+FL_REPEATED_START_STOP = FL_REPEATED_START | FL_STOP
 
 # I2C status flags
 STA_BUSY        = 1
@@ -70,6 +73,11 @@ def data_report_id(length: int):
     return 0xD0 + (length - 1) // 4
 
 def i2c_write(dev, address: int, data: list[int], flags: int = FL_START_STOP, wait: bool = False) -> bool:
+    """
+    Write to the given address. Looks like waiting completion is not necessary unless you don't want to issue
+    several writes in fast sequence. The FL_STOP may be omitted from flags in case you are going to read immediately
+    after the write. In such scenarios the read request should have FL_RESTART flag set.
+    """
     assert 0 < len(data) <= 60
     payload = [data_report_id(len(data)), address, flags, len(data)] + data
     dev.write(payload)
@@ -81,6 +89,7 @@ def i2c_write(dev, address: int, data: list[int], flags: int = FL_START_STOP, wa
     return True
 
 def i2c_read(dev, address: int, length: int, flags: int = FL_START_STOP) -> list[int]|None:
+    """Read from the given address"""
     assert 0 < length <= 60
     dev.write([0xC2, address, flags, length, 0])
     report = read_packet(dev, data_report_id(length))
@@ -101,6 +110,11 @@ def i2c_read(dev, address: int, length: int, flags: int = FL_START_STOP) -> list
     return report[2:2 + length]
 
 def i2c_probe(dev, address: int):
+    """
+    Test presence of the address on the bus. Typically the zero payload write is used for that purpose.
+    Unfortunately the FT260 completely ignores NAKed address during write transaction. So we are using
+    dummy 1-bytes read and check STA_NACK_ADDR status bit afterwards.
+    """
     dev.write([0xC2, address, FL_START_STOP, 1, 0])
     report = read_packet(dev, 0xD0)
     sta = i2c_wait_idle(dev)
