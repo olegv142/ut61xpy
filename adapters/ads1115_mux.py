@@ -1,6 +1,6 @@
 """
 Helper functions for using ADS115 with FT260 adapter and 16 channel external
-multiplexer (CD74HC4067) driven by GPIOB,C,D,E outputs of FT260.
+multiplexer (CD74HC4067) driven by GPIO outputs of FT260.
 See https://www.ti.com/lit/ds/symlink/cd74hc4067.pdf
 """
 
@@ -13,19 +13,19 @@ from device import Device
 from ads1115 import ADS1115Device
 import ft260
 
-MUX_GPIO_MASK = ft260.GPIOB | ft260.GPIOC | ft260.GPIOD | ft260.GPIOE
-
 def channel_to_gpio_bits(channel: int) -> int:
     val = 0
     if channel & 1:
-        val += ft260.GPIOB
+        val += ft260.GPIO4
     if channel & 2:
-        val += ft260.GPIOC
+        val += ft260.GPIO5
     if channel & 4:
-        val += ft260.GPIOD
+        val += ft260.GPIOB
     if channel & 8:
         val += ft260.GPIOE
     return val
+
+MUX_GPIO_MASK = channel_to_gpio_bits(0xf)
 
 def mux_read_positive(dev: ADS1115Device,
         channel: int, div: float, gain: int = 0,
