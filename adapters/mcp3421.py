@@ -1,5 +1,6 @@
 """
 MCP3421 18 bit ADC adapter
+See https://ww1.microchip.com/downloads/en/devicedoc/22003e.pdf
 """
 
 import os
