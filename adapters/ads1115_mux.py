@@ -8,6 +8,7 @@ import sys
 
 if __package__: sys.path.append(os.path.realpath(os.path.dirname(__file__)))
 
+from device import Device
 from ads1115 import ADS1115Device
 import ft260
 
@@ -37,6 +38,8 @@ def mux_read_positive(dev: ADS1115Device,
     """
     ft260.gpio_set(dev.dev, MUX_GPIO_MASK + xgpio_mask, channel_to_gpio_bits(channel) + xgpio)
     val = dev.exec_conversion(dev.MUX_1_G, gain)
+    if val is None:
+        return Device.INVALID_VALUE
     return val / div
 
 def mux_read_negative(dev: ADS1115Device,
@@ -52,6 +55,8 @@ def mux_read_negative(dev: ADS1115Device,
     ft260.gpio_set(dev.dev, MUX_GPIO_MASK + xgpio_mask, channel_to_gpio_bits(channel) + xgpio)
     vcc = dev.exec_conversion(dev.MUX_0_G, gain)
     val = dev.exec_conversion(dev.MUX_0_1, gain)
+    if vcc is None or val is None:
+        return Device.INVALID_VALUE
     return vcc - val / div
 
 if __name__ == '__main__':
