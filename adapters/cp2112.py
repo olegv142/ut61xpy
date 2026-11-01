@@ -21,8 +21,25 @@ STA_BUSY    = 1
 STA_SUCCESS = 2
 STA_FAILURE = 3
 
+STA2_NACK_ADDR   = 0
+STA2_BUSY_BUS    = 1
+STA2_ARBITR_LOST = 2
+STA2_NACK_READ   = 3
+STA2_NACK_WRITE  = 4
+STA2_SUCCESS     = 5
+
 def i2c_init(dev):
     dev.set_nonblocking(True)
+    # Set retry count to 1. With default value of 0 the failed write will be retried indefinitely till power off.
+    dev.send_feature_report([0x06,
+            0, 1, 0x86, 0xa0, # 100kHz clock
+            2, # wake up address
+            0, # auto send read (disabled)
+            0, 0, # write timeout
+            0, 0, # read timeout
+            0, # SCL low timeout (disabled)
+            1  # retry count
+        ])
 
 def read_packet(dev, pkt_id: int):
     wait = READ_TOUT
@@ -38,31 +55,43 @@ def read_packet(dev, pkt_id: int):
         delay *= 2
     return None
 
-def i2c_query_status(dev) -> int:
+def i2c_query_status(dev) -> tuple[int, int] | None:
     dev.write([0x15, 0x01])
     pkt = read_packet(dev, 0x16)
-    return pkt[1] if pkt else None
+    return (pkt[1], pkt[2]) if pkt else None
 
-def i2c_wait_idle(dev) -> bool:
+def i2c_wait_idle_status(dev) -> tuple[int, int] | None:
     wait = BUSY_TOUT
     delay = MIN_DELAY
     while True:
         sta = i2c_query_status(dev)
-        if sta in (STA_IDLE, STA_SUCCESS):
-            return True
-        if sta != STA_BUSY:
-            log.debug('bad status %sx', sta)
-            return False
+        if sta is None:
+            return sta
+        if sta[0] != STA_BUSY:
+            return sta
         if wait <= 0:
-            break
+            return sta
         time.sleep(delay)
         wait -= delay
         delay *= 2
-    log.debug('bad status %s', sta)
+
+def i2c_wait_idle(dev) -> bool:
+    """Write to the given address"""
+    sta = i2c_wait_idle_status(dev)
+    if sta is None:
+        log.error('failed to query i2c status')
+        return False
+    if sta[0] in (STA_IDLE, STA_SUCCESS):
+        return True
+    if sta[0] == STA_FAILURE:
+        log.debug('bad i2c status: %s', sta)
+        return False
+    log.error('timeout waiting i2c idle status: %s', sta)
     return False
 
 def i2c_write(dev, address: int, data: list[int]):
-    assert 0 < len(data) <= 61
+    """Read from the given address"""
+    assert 0 <= len(data) <= 61
     payload = [0x14, (address << 1), len(data)] + data
     dev.write(payload)
     if not i2c_wait_idle(dev):
@@ -89,6 +118,25 @@ def i2c_read(dev, address: int, length: int) -> list[int]|None:
             address, length, report[2])
         return None
     return report[3:length + 3]
+
+def i2c_probe(dev, address: int):
+    """Test presence of the address on the bus. Typically the zero payload write is used for that purpose.
+    Unfortunately the CP2112 completely ignores NAKed address during such transaction. So we are using
+    dummy 1-bytes read and check STA2_NACK_ADDR status bit afterwards.
+    """
+    dev.write([0x10, address << 1, 0, 1])
+    sta = i2c_wait_idle_status(dev)
+    if sta is None:
+        return False
+    if sta[0] in (STA_IDLE, STA_SUCCESS):
+        return True
+    if sta[0] == STA_FAILURE:
+        if sta[1] == STA2_NACK_ADDR:
+            return False
+        if sta[1] == STA2_NACK_READ:
+            return True
+    log.warning('bad i2c status probing addr %d: %s', address, sta)
+    return False
 
 #
 # GPIO routines
@@ -144,24 +192,33 @@ def gpio_get(dev) -> int:
     return response[1]
 
 if __name__ == '__main__':
-    # GPIO pins toggling test
-    import hid
+    import hid    
+    def test_gpio(dev):
+        """GPIO pins toggling test"""
+        pins = 0xff
+        gpio_config(dev, pins)
+        while True:
+            gpio_set(dev, 0x55, pins)
+            assert gpio_get(dev) == 0x55
+            time.sleep(1)
+            gpio_set(dev, ~0x55 & 0xff, 0x55)
+            assert gpio_get(dev) == 0
+            time.sleep(1)
+            gpio_set(dev, 0xaa, pins)
+            assert gpio_get(dev) == 0xaa
+            time.sleep(1)
+            gpio_set(dev, ~0xaa & 0xff, ~0xaa & 0xff)
+            assert gpio_get(dev) == 0xff
+            time.sleep(1)
+            print('.', end='', flush=True)
+
+    def test_scan(dev):
+        """Scan bus for devices"""
+        for addr in range(8, 128):
+            print(('%02x ' % addr) if i2c_probe(dev, addr) else '-- ', end='' if (addr + 1) % 8 else '\n')
+
     dev = hid.device()
     dev.open(DEVICE_VID, DEVICE_PID)
-    pins = 0xff
-    gpio_config(dev, pins)
-    while True:
-        gpio_set(dev, 0x55, pins)
-        assert gpio_get(dev) == 0x55
-        time.sleep(1)
-        gpio_set(dev, ~0x55 & 0xff, 0x55)
-        assert gpio_get(dev) == 0
-        time.sleep(1)
-        gpio_set(dev, 0xaa, pins)
-        assert gpio_get(dev) == 0xaa
-        time.sleep(1)
-        gpio_set(dev, ~0xaa & 0xff, ~0xaa & 0xff)
-        assert gpio_get(dev) == 0xff
-        time.sleep(1)
-        print('.', end='', flush=True)
-
+    i2c_init(dev)
+    test_scan(dev)
+    test_gpio(dev)
