@@ -1,5 +1,6 @@
 """
 Silicon Labs CP2112 adapter I2C and GPIO communication routines
+See https://www.silabs.com/documents/public/application-notes/an495-cp2112-interface-specification.pdf
 """
 
 import time
