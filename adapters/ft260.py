@@ -1,5 +1,6 @@
 """
 FTDI FT260 adapter I2C and GPIO communication routines
+See https://ftdichip.com/wp-content/uploads/2025/04/AN_394_User_Guide_for_FT260.pdf
 """
 
 import time
@@ -12,6 +13,7 @@ DEVICE_PID = 0x6030
 
 # I2C transaction flags
 FL_START = 2
+FL_REPEATED_START = 3
 FL_STOP  = 4
 FL_START_STOP = FL_START | FL_STOP
 
@@ -55,7 +57,7 @@ def i2c_wait_idle(dev) -> int:
     delay = MIN_DELAY
     while True:
         sta = i2c_query_status(dev)
-        if not (sta & STA_BUSY):
+        if not (sta & (STA_BUSY|STA_BUSY_BUS)):
             return sta & ~STA_IDLE
         if wait <= 0:
             break
@@ -169,6 +171,7 @@ def gpio_setup_pinG(dev):
     dev.send_feature_report([0xA1, 9, 0])
 
 if __name__ == '__main__':
+    # GPIO pins toggling test
     import hid
     dev = hid.device()
     dev.open(DEVICE_VID, DEVICE_PID)
