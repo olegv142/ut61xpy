@@ -1,6 +1,7 @@
 """
 Helper functions for using ADS115 with FT260 adapter and 16 channel external
 multiplexer (CD74HC4067) driven by GPIOB,C,D,E outputs of FT260.
+See https://www.ti.com/lit/ds/symlink/cd74hc4067.pdf
 """
 
 import os
