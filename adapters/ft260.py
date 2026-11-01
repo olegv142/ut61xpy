@@ -217,5 +217,6 @@ if __name__ == '__main__':
 
     dev = hid.device()
     dev.open(DEVICE_VID, DEVICE_PID)
+    i2c_init(dev)
     test_scan(dev)
     test_gpio(dev)
