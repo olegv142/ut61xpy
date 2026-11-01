@@ -1,6 +1,7 @@
 """
 FTDI FT260 adapter I2C and GPIO communication routines
-See https://ftdichip.com/wp-content/uploads/2025/04/AN_394_User_Guide_for_FT260.pdf
+See https://ftdichip.com/wp-content/uploads/2023/08/DS_FT260.pdf
+https://ftdichip.com/wp-content/uploads/2025/04/AN_394_User_Guide_for_FT260.pdf
 https://ftdichip.com/wp-content/uploads/2026/05/TN_189-FT260-Errata-Technical-Note.pdf
 """
 
