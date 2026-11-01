@@ -169,7 +169,6 @@ def gpio_setup_pinG(dev):
     dev.send_feature_report([0xA1, 9, 0])
 
 if __name__ == '__main__':
-    # GPIO pins toggling test
     import hid
     dev = hid.device()
     dev.open(DEVICE_VID, DEVICE_PID)
