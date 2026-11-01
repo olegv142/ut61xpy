@@ -249,18 +249,25 @@ class USBMixin(DeviceInstanceMixin):
             return False
         return super().set_model_param(key, val)
 
+def find_hid_devices(vid: int, pid: int, ifnum: int|None = None) -> list[dict]:
+    """Find hid devices given VID, PID and optionally interface number"""
+    import_hid()
+    devs = hid.enumerate(vid, pid)
+    if len(devs) > 1 or ifnum is not None:
+        devs_ = [dev for dev in devs if dev.get('interface_number', 0) == (0 if ifnum is None else ifnum)]
+        if ifnum is not None:
+            return devs_
+        if len(devs_) == 1:
+            log.warning('interface #0 selected among %d devices', len(devs))
+            return devs_
+    return devs
+
 class HIDMixin(USBMixin):
     """Methods specific for USB HID devices"""
     @classmethod
     def list_paths(cls) -> list[str]:
         """Returns the list of HID device paths"""
-        import_hid()
-        devs = hid.enumerate(cls.DEVICE_VID, cls.DEVICE_PID)
-        if len(devs) > 1:
-            devs0 = [dev for dev in devs if dev.get('interface_number', 0) == 0]
-            if len(devs0) == 1:
-                log.warning('interface #0 selected among %d devices', len(devs))
-                devs = devs0
+        devs = find_hid_devices(cls.DEVICE_VID, cls.DEVICE_PID)
         return [dev['path'].decode('ascii') for dev in devs]
 
     @classmethod
