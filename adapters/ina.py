@@ -1,5 +1,6 @@
 """
 Adapters for TI INA226 and INA228 current & voltage monitors
+See https://www.ti.com/lit/gpn/INA226 https://www.ti.com/lit/gpn/INA228
 """
 
 import os
