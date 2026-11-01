@@ -1,5 +1,6 @@
 """
 ADS1115 16 bit ADC adapter
+See https://www.ti.com/lit/ds/symlink/ads1115.pdf
 """
 
 import os
