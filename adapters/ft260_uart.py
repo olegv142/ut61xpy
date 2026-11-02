@@ -1,5 +1,8 @@
 """
-FTDI FT260 UART functions
+FTDI FT260 UART functions.
+Note that to activate UART on FT260 both NF0,1 pins should be grounded.
+On the CJMCU-260 module the NF0 is pulled up so that only I2C is enabled by default.
+One can fix that by connecting NF0 pin to GND so that both UART and I2C become active.
 """
 
 import os
