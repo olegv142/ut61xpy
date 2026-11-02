@@ -1,6 +1,11 @@
 """
 ADS1115 16 bit ADC adapter
 See https://www.ti.com/lit/ds/symlink/ads1115.pdf
+Note that ADS115 is fully pin-to-pin and I2C protocol compatible with ADS1015 which has 12-bit resolution.
+It's quite easy to buy a counterfeit ADS1115 module that actually has an ADS1015 module soldered into it.
+So take care of the two important things:
+  - chip should have valid marking (BOGI is correct)
+  - the least significant bits must not be constantly zero
 """
 
 import os
