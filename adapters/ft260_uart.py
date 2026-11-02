@@ -7,7 +7,7 @@ import sys
 import time
 import logging
 import struct
-import random
+import threading
 
 if __package__: sys.path.append(os.path.realpath(os.path.dirname(__file__)))
 
@@ -70,7 +70,12 @@ def uart_tx(dev, data: list[int]):
     dev.write(payload)
 
 def uart_rx(dev, tout=0) -> list[int]:
-    """Receive UART data"""
+    """
+    Receive UART data. Note that the FT260 delivers data received in hid reports ASAP,
+    typically once a millisecond. So with low baud rate it may deliver only single byte per hid report.
+    The problem is that OS has a per-handle queue keeping only 32 recent hid reports. So the receiver
+    should read reports faster than once in 32 milliseconds to avoid data loss.
+    """
     data = []
     IDLE_WAIT = .01
     while True:
@@ -84,17 +89,75 @@ def uart_rx(dev, tout=0) -> list[int]:
             time.sleep(IDLE_WAIT)
             tout -= IDLE_WAIT
 
+class UARTReceiver:
+    """Class reading received data in separate thread"""
+    IDLE_WAIT = .01
+
+    def __init__(self, dev):
+        self.dev    = dev
+        self.worker = None
+        self.cancel = None
+        self.lock = threading.Lock()
+        self.buff = []
+        self.failed = False
+
+    def start(self):
+        assert self.worker is None
+        self.cancel = False
+        self.worker = threading.Thread(target=self._work, daemon=True)
+        self.worker.start()
+
+    def stop(self):
+        assert self.worker is not None
+        self.cancel = True
+        self.worker.join()
+        self.worker = None
+
+    def _work(self):
+        while not self.cancel:
+            try:
+                with self.lock:
+                    chunk = uart_rx(self.dev)
+                    self.buff += chunk
+            except Exception as e:
+                log.debug(e, exc_info=True)
+                self.failed = True
+                return
+            time.sleep(self.IDLE_WAIT)
+
+    def get(self) -> list[int]:
+        assert self.worker is not None
+        with self.lock:
+            buff, self.buff = self.buff, []
+            return buff
+
+    def is_failed(self) -> bool:
+        return self.failed
+
+
 if __name__ == '__main__':
+    import random
+
     dev = find_uart()
     uart_init(dev, 19200, PARITY_ODD)
-    BUNCH = 4
-    while True:
-        sent = []
-        for _ in range(BUNCH):
-            n = random.randrange(1, 60)
-            chunk = list(random.randbytes(n))
-            uart_tx(dev, chunk)
-            sent += chunk
-        received = uart_rx(dev, 1)
-        assert sent == received
-        print('.', end='', flush=True)
+    receiver = UARTReceiver(dev)
+    receiver.start()
+    BUNCH = 16
+    try:
+        while True:
+            sent = []
+            for _ in range(BUNCH):
+                n = random.randrange(1, 60)
+                chunk = list(random.randbytes(n))
+                uart_tx(dev, chunk)
+                sent += chunk
+            time.sleep(.5)
+            if receiver.is_failed():
+                print('\naborted')
+                break
+            received = receiver.get()
+            assert sent == received
+            print('.', end='', flush=True)
+    except KeyboardInterrupt:
+        receiver.stop()
+        assert not receiver.is_failed()
