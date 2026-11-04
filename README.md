@@ -786,7 +786,7 @@ if dev := ADS1115Device.open():
 See [ads1115_mux.py](adapters/ads1115_mux.py) for more implementation details. Note that ADS1115 has finite input impedance of ~10 MOhm. Therefore to keep measuring accuracy within 0.1% the R0 value should not exceed 10kOhm.
 
 ### Using UART port of the FT260 adapter
-The big advantage of FT260 USB adapter is the possibility to use its UART port in parallel with I2C bus operation. The UART has its own HID device instance so its completely dependent. The only peculiarity that should be kept in mind is the low receiver queue capacity. Therefore the port should be read frequently to avoid data loss. The ft260_uart.py module implements the dedicated receiver class queering data received by UART in separate thread. The following code fragment illustrates using FT260 module UART port.
+The big advantage of FT260 USB adapter is the possibility to use its UART port in parallel with I2C bus operation. The UART has its own HID device instance so its completely dependent. The only peculiarity that should be kept in mind is the low receiver queue capacity. Therefore the port should be read frequently to avoid data loss. The ft260_uart.py module implements the dedicated receiver class queering data received by UART in separate thread. The following code fragment illustrates using FT260 module UART port to transmit message and receive it back having RX-TX pins interconnected.
 ```python
 import time
 from ut61xpy.adapters.ft260_uart import find_uart, uart_init, uart_tx, UARTReceiver
