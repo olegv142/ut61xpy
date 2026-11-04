@@ -66,10 +66,10 @@ def uart_disable(dev):
 def data_report_id(length: int):
     return 0xF0 + (length - 1) // 4
 
-def uart_tx(dev, data: list[int]):
+def uart_tx(dev, data: list[int]|bytes):
     """Transmit chunk of data"""
     assert 0 < len(data) <= 60
-    payload = [data_report_id(len(data)), len(data)] + data
+    payload = [data_report_id(len(data)), len(data)] + list(data)
     dev.write(payload)
 
 def uart_rx(dev, tout=0) -> list[int]:
@@ -134,9 +134,22 @@ class UARTReceiver:
             buff, self.buff = self.buff, []
             return buff
 
+    def is_running(self) -> bool:
+        return self.worker is not None
+
     def is_failed(self) -> bool:
         return self.failed
 
+    def __enter__(self):
+        """Start receiver on entering 'with' block"""
+        if not self.is_running():
+            self.start()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Stop receiver on exiting 'with' block"""
+        if self.is_running():
+            self.stop()
 
 if __name__ == '__main__':
     import random
