@@ -1,4 +1,4 @@
-# A cross-platform tool for recording and plotting digital multimeter data, supporting many popular multimeters from UNI-T, OWON, ANENG, ZOTEK, BSIDE, FNIRSI USB testers, INA226/228 current and voltage monitors, as well as MCP3421 and ADS1115 ADC boards.
+# A cross-platform tool for recording and plotting digital multimeter data, supporting many popular multimeters from UNI-T, OWON, ANENG, ZOTEK, BSIDE, FNIRSI USB testers, INA226/228 current and voltage monitors, as well as several popular ADC boards via USB adapter.
 
 This repository provides simple alternative to vendor data collection programs. It works uniformly on Windows, Linux and MacOS. One can use it either from command line or GUI. Since the code is written in python it may be easily incorporated onto your complex measuring or automation system. 
 
