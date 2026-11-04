@@ -119,8 +119,8 @@ class UARTReceiver:
     def _work(self):
         while not self.cancel:
             try:
+                chunk = uart_rx(self.dev)
                 with self.lock:
-                    chunk = uart_rx(self.dev)
                     self.buff += chunk
             except Exception as e:
                 log.debug(e, exc_info=True)
