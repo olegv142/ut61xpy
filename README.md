@@ -785,6 +785,25 @@ if dev := ADS1115Device.open():
 ```
 See [ads1115_mux.py](adapters/ads1115_mux.py) for more implementation details. Note that ADS1115 has finite input impedance of ~10 MOhm. Therefore to keep measuring accuracy within 0.1% the R0 value should not exceed 10kOhm.
 
+### Using UART port of the FT260 adapter
+The big advantage of FT260 USB adapter is the possibility to use its UART port in parallel with I2C bus operation. The UART has its own HID device instance so its completely dependent. The only peculiarity that should be kept in mind is the low receiver queue capacity. Therefore the port should be read frequently to avoid data loss. The ft260_uart.py module implements the dedicated receiver class queering data received by UART in separate thread. The following code fragment illustrates using FT260 module UART port.
+```python
+import time
+from ut61xpy.adapters.ft260_uart import find_uart, uart_init, uart_tx, UARTReceiver
+
+if dev := find_uart():
+    uart_init(dev, 19200)
+    with UARTReceiver(dev) as rx:
+        uart_tx(dev, b'Hello!')
+        time.sleep(.5)
+        print(bytes(rx.get()))
+    dev.close()
+else:
+    print('FT260 UART not found')
+```
+See [ft260_uart.py](adapters/ft260_uart.py) for more implementation details. Note that on the CJMCU-260 module the NF0 operation mode selection pin is pulled up so that only I2C is enabled by default.
+One should connect NF0 pin to GND to be able to use UART and I2C at the same time.
+
 ## Which multimeter is better and why
 If you don't need exceptional precision, then all multimeters with 6000 counts and more will give you reasonably good results in any mode except for the current measuring. Here we will consider why the current measuring mode is so demanding and why popular UNI-T multimeters are actually the least usable models for this task.
 
