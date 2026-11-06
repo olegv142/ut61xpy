@@ -75,12 +75,11 @@ def i2c_tx_raw(dev, data: list[int], read_len: int = 0) -> tuple[bool, list[int]
     assert read_len <= 64
     assert len(data) >= 1
     addr, addr_cnt = data[0], 0
-
-    tail = [CmdI2CStart]
+    tail = []
 
     if read_len:
         addr_cnt += 1 # transmit read address
-        tail += [CmdI2CWrite + 1, addr | 1] # write read address
+        tail += [CmdI2CStart, CmdI2CWrite + 1, addr | 1] # write read address
         if read_len == 1:
             tail += [CmdI2CRead]
         else:
