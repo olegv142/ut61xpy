@@ -65,7 +65,7 @@ CmdI2CWrite = 0x80
 # be completed with one byte reading (0xc0), otherwise next operation will fail.
 CmdI2CRead = 0xc0
 
-def i2c_tx_raw(dev, data: list[int], read_len: int = 0) -> Tuple[bool, list[int]]:
+def i2c_tx_raw(dev, data: list[int], read_len: int = 0) -> tuple[bool, list[int]]:
     """
     Write and read i2c bus through I2CStream given the length of the data to read
     and the data to write. The first byte of the data to write is always write address
