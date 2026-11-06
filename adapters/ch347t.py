@@ -9,6 +9,8 @@ https://github.com/serfreeman1337/go-ch347
 import time
 import logging
 
+if __package__: sys.path.append(os.path.realpath(os.path.dirname(__file__)))
+
 log = logging.getLogger('DEV')
 
 DEVICE_VID = 0x1A86
@@ -21,6 +23,24 @@ I2CMode2 = 2 # Fast rate 400KHz
 I2CMode3 = 3 # High rate 750KHz
 
 READ_TOUT_MS = 20
+
+def find_device():
+    """Find device and open it"""
+    import device
+    devs = device.find_hid_devices(DEVICE_VID, DEVICE_PID, ifnum=DEVICE_IFN)
+    if not devs:
+        return None
+    if len(devs) > 1:
+        log.warning('%d devices found', len(devs))
+        return None
+    path = devs[0]['path']
+    dev = device.hid.device()
+    try:
+        dev.open_path(path)
+    except Exception:
+        log.error('failed to open CH347T at %s', path)
+        return None
+    return dev
 
 def i2c_init(dev, mode: int = I2CMode1):
     dev.write([0, 3, 0, 0xaa, 0x60 + mode, 0])
@@ -54,11 +74,12 @@ def i2c_tx_raw(dev, data: list[int], read_len: int = 0) -> Tuple[bool, list[int]
     assert read_len <= 64
     assert len(data) >= 1
     addr, addr_cnt = data[0], 0
-    tail = []
+
+    tail = [CmdI2CStart]
 
     if read_len:
         addr_cnt += 1 # transmit read address
-        tail += [CmdI2CStart, CmdI2CWrite + 1, addr | 1] # write read address
+        tail += [CmdI2CWrite + 1, addr | 1] # write read address
         if read_len == 1:
             tail += [CmdI2CRead]
         else:
@@ -106,8 +127,7 @@ if __name__ == '__main__':
         for addr in range(8, 128):
             print(('%02x ' % addr) if i2c_probe(dev, addr) else '-- ', end='' if (addr + 1) % 8 else '\n')
 
-    dev = hid.device()
-    dev.open(DEVICE_VID, DEVICE_PID)
+    dev = find_device()
     i2c_init(dev)
     test_scan(dev)
 
