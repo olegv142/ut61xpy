@@ -41,7 +41,7 @@ def i2c_init(dev):
             1  # retry count
         ])
 
-def read_packet(dev, pkt_id: int, tout = READ_TOUT):
+def read_packet(dev, pkt_id: int, tout = READ_TOUT) -> list[int] | None:
     while True:
         if pkt := dev.read(64):
             if pkt[0] == pkt_id:

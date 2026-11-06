@@ -30,44 +30,38 @@ STA_ARBITR_LOST = 16
 STA_IDLE        = 32
 STA_BUSY_BUS    = 64
 
-MIN_DELAY = .005
-READ_TOUT = .025
-BUSY_TOUT = .050
+IDLE_DELAY = .005
+READ_TOUT  = .025
+BUSY_TOUT  = .050
 
 def i2c_init(dev):
     dev.set_nonblocking(True)
     dev.send_feature_report([0xA1, 0x20]) # reset I2C
 
-def read_packet(dev, pkt_id: int):
-    wait = READ_TOUT
-    delay = MIN_DELAY
+def read_packet(dev, pkt_id: int, tout = READ_TOUT) -> list[int] | None:
     while True:
         if pkt := dev.read(64):
             if pkt[0] == pkt_id:
                 return pkt
-        if wait <= 0:
+        if tout <= 0:
             break
-        time.sleep(delay)
-        wait -= delay
-        delay *= 2
+        time.sleep(IDLE_DELAY)
+        tout -= IDLE_DELAY
     return None
 
 def i2c_query_status(dev) -> int:
     sta = dev.get_feature_report(0xC0, 61)
     return sta[1]
 
-def i2c_wait_idle(dev) -> int:
-    wait = BUSY_TOUT
-    delay = MIN_DELAY
+def i2c_wait_idle(dev, tout = BUSY_TOUT) -> int:
     while True:
         sta = i2c_query_status(dev)
         if not (sta & (STA_BUSY|STA_BUSY_BUS)):
             return sta & ~STA_IDLE
-        if wait <= 0:
+        if tout <= 0:
             break
-        time.sleep(delay)
-        wait -= delay
-        delay *= 2
+        time.sleep(IDLE_DELAY)
+        tout -= IDLE_DELAY
     return sta
 
 def data_report_id(length: int):
@@ -110,7 +104,7 @@ def i2c_read(dev, address: int, length: int, flags: int = FL_START_STOP) -> list
         return None
     return report[2:2 + length]
 
-def i2c_probe(dev, address: int):
+def i2c_probe(dev, address: int) -> bool:
     """
     Test presence of the address on the bus. Typically the zero payload write is used for that purpose.
     Unfortunately the FT260 completely ignores NAKed address during write transaction. So we are using
