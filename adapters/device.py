@@ -183,6 +183,7 @@ class USBMixin(DeviceInstanceMixin):
     # Default VID, PID should be defined in subclasses
     DEVICE_VID: int = None
     DEVICE_PID: int = None
+    DEVICE_IFN: int|None = None
 
     def __init__(self, dev: Any, path: str):
         """Constructor, called by open_path"""
@@ -267,7 +268,7 @@ class HIDMixin(USBMixin):
     @classmethod
     def list_paths(cls) -> list[str]:
         """Returns the list of HID device paths"""
-        devs = find_hid_devices(cls.DEVICE_VID, cls.DEVICE_PID)
+        devs = find_hid_devices(cls.DEVICE_VID, cls.DEVICE_PID, cls.DEVICE_IFN)
         return [dev['path'].decode('ascii') for dev in devs]
 
     @classmethod

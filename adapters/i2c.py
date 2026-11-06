@@ -12,14 +12,16 @@ if __package__: sys.path.append(os.path.realpath(os.path.dirname(__file__)))
 from device import Device, HIDMixin
 import ft260
 import cp2112
+import ch347t
 
 log = logging.getLogger('DEV')
 
 class I2CAdapter:
     """Base class for I2C adapters"""
-    # The following should be defined in subcasses
+    # The following should be defined in subclasses
     DEVICE_VID = None
     DEVICE_PID = None
+    DEVICE_IFN = None
     NAME = None
 
     def __init__(self, dev):
@@ -66,11 +68,29 @@ class CP2112Adapter(I2CAdapter):
     def i2c_read(self, addr: int, length: int) -> list[int]|None:
         return cp2112.i2c_read(self.dev, addr, length)
 
+class CH347TAdapter(I2CAdapter):
+    """CH347T I2C adapter class"""
+    DEVICE_VID = ch347t.DEVICE_VID
+    DEVICE_PID = ch347t.DEVICE_PID
+    DEVICE_IFN = ch347t.DEVICE_IFN
+    NAME = 'CH347T'
+
+    def __init__(self, dev):
+        self.dev = dev
+        ch347t.i2c_init(self.dev)
+
+    def i2c_write(self, addr: int, data: list[int]) -> bool:
+        return ch347t.i2c_write(self.dev, addr, data)
+
+    def i2c_read(self, addr: int, length: int) -> list[int]|None:
+        return ch347t.i2c_read(self.dev, addr, length)
+
 class I2CDevice(Device, HIDMixin):
     """Base class for devices using I2C communication bus"""
     I2C_ADAPTER_TYPE = FT260Adapter # default i2c adapter
     DEVICE_VID = I2C_ADAPTER_TYPE.DEVICE_VID
     DEVICE_PID = I2C_ADAPTER_TYPE.DEVICE_PID
+    DEVICE_IFN = I2C_ADAPTER_TYPE.DEVICE_IFN
     I2C_ADDR = None # must be redefined in subclasses
 
     def __init__(self, *args):
@@ -83,6 +103,7 @@ class I2CDevice(Device, HIDMixin):
         cls.I2C_ADAPTER_TYPE = T
         cls.DEVICE_VID = T.DEVICE_VID
         cls.DEVICE_PID = T.DEVICE_PID
+        cls.DEVICE_IFN = T.DEVICE_IFN
         return cls
 
     @classmethod
@@ -94,7 +115,7 @@ class I2CDevice(Device, HIDMixin):
         lkey = key.lower()
         if lkey == 'i2c':
             uval = val.upper()
-            for T in (FT260Adapter, CP2112Adapter):
+            for T in (FT260Adapter, CP2112Adapter, CH347TAdapter):
                 if uval == T.NAME:
                     cls.set_i2c_adapter(T)
                     return True
