@@ -14,13 +14,12 @@ import threading
 
 if __package__: sys.path.append(os.path.realpath(os.path.dirname(__file__)))
 
-import device
-from ft260 import DEVICE_VID, DEVICE_PID
-
 log = logging.getLogger('DEV')
 
 def find_uart():
     """Find UART device and open it"""
+    import device
+    from ft260 import DEVICE_VID, DEVICE_PID
     devs = device.find_hid_devices(DEVICE_VID, DEVICE_PID, ifnum=1)
     if not devs:
         return None
