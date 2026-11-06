@@ -43,6 +43,7 @@ def find_device():
     return dev
 
 def i2c_init(dev, mode: int = I2CMode1):
+    dev.set_nonblocking(False)
     dev.write([0, 3, 0, 0xaa, 0x60 + mode, 0])
 
 # The command package of the I2C interface, starting from the secondary byte,
@@ -93,7 +94,6 @@ def i2c_tx_raw(dev, data: list[int], read_len: int = 0) -> Tuple[bool, list[int]
         addr_cnt += 1 # transmit write address
         payload = [0, 3 + len(data) + len(tail), 0, CmdI2CStream, CmdI2CStart, CmdI2CWrite + len(data)] + data + tail
 
-    dev.set_nonblocking(False)
     dev.write(payload)
     feedback = dev.read(512, timeout_ms=READ_TOUT_MS)
     if not feedback:
