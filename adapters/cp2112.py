@@ -11,9 +11,9 @@ log = logging.getLogger('DEV')
 DEVICE_VID = 0x10C4
 DEVICE_PID = 0xEA90
 
-MIN_DELAY = .005
-READ_TOUT = .025
-BUSY_TOUT = .050
+IDLE_DELAY = .005
+READ_TOUT  = .025
+BUSY_TOUT  = .050
 
 # I2C status
 STA_IDLE    = 0
@@ -41,18 +41,15 @@ def i2c_init(dev):
             1  # retry count
         ])
 
-def read_packet(dev, pkt_id: int):
-    wait = READ_TOUT
-    delay = MIN_DELAY
+def read_packet(dev, pkt_id: int, tout = READ_TOUT):
     while True:
         if pkt := dev.read(64):
             if pkt[0] == pkt_id:
                 return pkt
-        if wait <= 0:
+        if tout <= 0:
             break
-        time.sleep(delay)
-        wait -= delay
-        delay *= 2
+        time.sleep(IDLE_DELAY)
+        tout -= IDLE_DELAY
     return None
 
 def i2c_query_status(dev) -> tuple[int, int] | None:
@@ -60,20 +57,17 @@ def i2c_query_status(dev) -> tuple[int, int] | None:
     pkt = read_packet(dev, 0x16)
     return (pkt[1], pkt[2]) if pkt else None
 
-def i2c_wait_idle_status(dev) -> tuple[int, int] | None:
-    wait = BUSY_TOUT
-    delay = MIN_DELAY
+def i2c_wait_idle_status(dev, tout = BUSY_TOUT) -> tuple[int, int] | None:
     while True:
         sta = i2c_query_status(dev)
         if sta is None:
             return sta
         if sta[0] != STA_BUSY:
             return sta
-        if wait <= 0:
+        if tout <= 0:
             return sta
-        time.sleep(delay)
-        wait -= delay
-        delay *= 2
+        time.sleep(IDLE_DELAY)
+        tout -= IDLE_DELAY
 
 def i2c_wait_idle(dev) -> bool:
     """Write to the given address"""
