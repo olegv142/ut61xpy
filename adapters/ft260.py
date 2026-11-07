@@ -165,7 +165,7 @@ GPIO_REPORT = 0xB0
 
 def gpio_set(dev, out_mask: int, out_bits: int):
     """
-    Setup GPIO direction mask ans set output levels.
+    Setup GPIO direction mask and set output levels.
     The low order byte corresponds to GPIO0..5 while
     the high order byte corresponds to GPIOA..H pins.
     """

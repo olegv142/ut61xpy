@@ -124,6 +124,132 @@ def i2c_probe(dev, address: int) -> bool:
     sta, ret = i2c_tx_raw(dev, [address << 1]) # Just check if address was acknowledged
     return sta
 
+#
+# GPIO control API
+#
+
+CmdGPIOSetup = 0xCC
+
+def gpio_set_pin(dev, pin: int, out_dir: bool, level: bool = False) -> bool|None:
+    """
+    Setup direction and level of the particular pin given its index.
+    Setting level seems to be ignored for the input pins (out_dir = False).
+    Returns True on success, None on error. Note that the response from the adapter
+    contains the actual level of the output pin after the new level was set up.
+    In case it differs from the level set up the function returns False. This may be
+    expected due to the low impedance or capacitive load. 
+    """
+    assert 0 <= pin < 8
+    prefix = [11, 0, CmdGPIOSetup, 8, 0]
+    pkt = prefix + [0] * 8
+    cfg = 0xf0 if out_dir else 0xc0
+    if level:
+        cfg += 8
+    pkt[len(prefix)+pin] = cfg
+    dev.write([0] + pkt)
+    feedback = dev.read(512, timeout_ms=READ_TOUT_MS)
+    if not feedback:
+        log.error('GPIO packet response timeout')
+        return None
+    if feedback[:len(prefix)] != prefix:
+        log.error('bad GPIO packet response: %s, expect %s', feedback[:len(prefix)], prefix)
+        return None
+    cfg_ret = feedback[len(prefix)+pin]
+    if out_dir != ((cfg_ret & 0x80) != 0):
+        log.debug('failed to set GPIO#%d as %s, got %s', pin,
+            'output' if out_dir else 'input', bin(cfg_ret))
+        return None
+    if out_dir:
+        out_level = ((cfg_ret & 0x40) != 0)
+        if level != out_level:
+            log.debug('failed to set GPIO#%d level to %s', pin, 'high' if level else 'low')
+            return False
+    return True
+
+def gpio_get_pin(dev, pin: int) -> bool|None:
+    """
+    Read the particular GPIO pin level given its index. Returns True if the level is high,
+    False if low, None in case of error. This function returns the actual pin level
+    even in case the pin is configured as output. So it will return zero bit for short
+    circuited pin even if it was set to high level by gpio_set_pin.
+    """
+    assert 0 <= pin < 8
+    prefix = [11, 0, CmdGPIOSetup, 8, 0]
+    pkt = prefix + [0] * 8
+    dev.write([0] + pkt)
+    feedback = dev.read(512, timeout_ms=READ_TOUT_MS)
+    if not feedback:
+        log.error('GPIO packet response timeout')
+        return None
+    cfg_ret = feedback[len(prefix)+pin]
+    return ((cfg_ret & 0x40) != 0)
+
+def gpio_set(dev, pin_mask : int, out_mask: int, out_bits: int) -> bool|None:
+    """
+    Setup pin direction and levels for the pins having corresponding bit set in pin_mask.
+    Returns True on success, None on error. Note that the response from the adapter
+    contains the actual level of the output pin after the new level was set up.
+    In case it differs from the level set up the function returns False. This may be
+    expected due to the low impedance or capacitive load.
+    """
+    prefix = [11, 0, CmdGPIOSetup, 8, 0]
+    pkt = prefix + [0] * 8
+    for pin in range(8):
+        bit = 1 << pin
+        if pin_mask & bit:
+            cfg = 0xf0 if (out_mask & bit) else 0xc0
+            if out_bits & bit:
+                cfg += 8
+            pkt[len(prefix)+pin] = cfg
+    dev.write([0] + pkt)
+    feedback = dev.read(512, timeout_ms=READ_TOUT_MS)
+    if not feedback:
+        log.error('GPIO packet response timeout')
+        return None
+    if feedback[:len(prefix)] != prefix:
+        log.error('bad GPIO packet response: %s, expect %s', feedback[:len(prefix)], prefix)
+        return None
+    res = True
+    for pin in range(8):
+        bit = 1 << pin
+        if pin_mask & bit:
+            cfg_ret = feedback[len(prefix)+pin]
+            out_dir = ((out_mask & bit) != 0)
+            if out_dir != ((cfg_ret & 0x80) != 0):
+                log.debug('failed to set GPIO#%d as %s, got %s', pin,
+                    'output' if out_dir else 'input', bin(cfg_ret))
+                return None
+            if out_dir:
+                level = ((out_bits & bit) != 0)
+                out_level = ((cfg_ret & 0x40) != 0)
+                if level != out_level:
+                    log.debug('failed to set GPIO#%d level to %s', pin, 'high' if level else 'low')
+                    res = False
+    return res
+
+def gpio_get(dev) -> int:
+    """
+    Get input/output pin levels as bitmask. This function returns the actual pin level
+    even in case the pin is configured as output. So it will return zero bit for short
+    circuited pin even if it was set to high level by gpio_set.
+    """
+    prefix = [11, 0, CmdGPIOSetup, 8, 0]
+    pkt = prefix + [0] * 8
+    dev.write([0] + pkt)
+    feedback = dev.read(512, timeout_ms=READ_TOUT_MS)
+    if not feedback:
+        log.error('GPIO packet response timeout')
+        return None
+    bitmask = 0
+    for pin in range(8):
+        cfg_ret = feedback[len(prefix)+pin]
+        if (cfg_ret & 0x40) != 0:
+            bitmask += 1 << pin
+    return bitmask
+
+# GPIO4 drives LED on MUSE LAB board (active low)
+LED_GPIO_PIN = 4
+
 if __name__ == '__main__':
     import hid
 
@@ -132,8 +258,41 @@ if __name__ == '__main__':
         for addr in range(8, 128):
             print(('%02x ' % addr) if i2c_probe(dev, addr) else '-- ', end='' if (addr + 1) % 8 else '\n')
 
+    def test_gpio_02(dev):
+        """Test GPIO input/output with pins GPIO0,2 interconnected"""
+        gpio_set_pin(dev, 2, out_dir=False)
+        for i in range(100):
+            level = (i & 1) != 0
+            gpio_set_pin(dev, 0, True, level)
+            time.sleep(.005)
+            assert level == gpio_get_pin(dev, 0)
+            assert level == gpio_get_pin(dev, 2)
+            assert (gpio_get(dev) & 5) == (5 if level else 0)
+        for i in range(100):
+            level = (i & 1) != 0
+            gpio_set(dev, 5, 4, 4 if level else 0)
+            time.sleep(.005)
+            assert level == gpio_get_pin(dev, 0)
+            assert level == gpio_get_pin(dev, 2)
+            assert (gpio_get(dev) & 5) == (5 if level else 0)
+
+    def led_blink(dev):
+        for i in range(20):
+            gpio_set_pin(dev, LED_GPIO_PIN, True, i % 2 != 0)
+            time.sleep(.05)
+
+    def test_gpio_blink(dev):
+        cnt = 0
+        while True:
+            assert gpio_set(dev, 0xff, 0xff, 1 << (cnt % 8))
+            print('.', end='', flush=True)
+            time.sleep(.5)
+            cnt += 1
+
+    logging.basicConfig(level=logging.DEBUG)
     dev = find_device()
     i2c_init(dev)
     test_scan(dev)
-
-
+    #test_gpio_02(dev)
+    led_blink(dev)
+    #test_gpio_blink(dev)
