@@ -49,11 +49,14 @@ class FnirsiUsbDevice(HIDMixin, Device):
             self.disconnected = True
             log.debug(e, exc_info=True)
 
-    def get_channels(self, data):
-        """Get the number of channels contained in the raw data"""
+    def get_channel(self, data):
+        """
+        Returns the index of the channel the data belongs to. If there are multiple
+        channels contained in the data, it returns -1. It there are no data, it returns None.
+        """
         if not data:
-            return 0
-        return self.channels
+            return None
+        return -1 if self.channels > 1 else 0
 
     def query_raw(self, idle_sleep=time.sleep):
         """Queries raw data packet from HID device"""
@@ -123,11 +126,14 @@ class FnirsiBtDevice(BTMixin, Device):
             await self.dev.write_gatt_char(self.BT_TX_CHAR, bytearray(self.CMD_START), response=True)
         bt_engine.async_exec(a_init())
 
-    def get_channels(self, data):
-        """Get the number of channels contained in the raw data"""
+    def get_channel(self, data):
+        """
+        Returns the index of the channel the data belongs to. If there are multiple
+        channels contained in the data, it returns -1. It there are no data, it returns None.
+        """
         if not data:
-            return 0
-        return self.channels
+            return None
+        return -1 if self.channels > 1 else 0
 
     def _notify_cb(self, char, val):
         """BT adapter data changed notification callback"""

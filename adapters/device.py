@@ -70,19 +70,10 @@ class Device:
         """Reads raw data packet from device and returns it. Returns None to indicate failure."""
         raise NotImplementedError()
 
-    def get_channels(self, data: Any) -> int:
+    def get_channel(self, data: Any) -> int | None:
         """
-        Get the number of channels contained in the raw data. If there are more than 1 channel
-        its index should be passed explicitly to get_value and get_mode method. Otherwise
-        the channel number may be retrieved by get_channel method.
-        """
-        return 1 if data else 0
-
-    def get_channel(self, data: Any) -> int:
-        """
-        The UT61E+ can measure DC and AC voltage alternately in DC voltage dial position.
-        This function returns 1 in such mode (25) if the data belongs to the alternative
-        measuring channel, so it represents AC voltage. Otherwise it returns 0.
+        Returns the index of the channel the data belongs to. If there are multiple
+        channels contained in the data, it returns -1. It there are no data, it returns None.
         """
         return 0
 

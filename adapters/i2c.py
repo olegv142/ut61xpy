@@ -157,6 +157,7 @@ class I2CDeviceCore(Device, HIDMixin):
 
 class I2CBusScanner(I2CDeviceCore):
     """The sole purpose of this device class is to scan I2C bus addresses"""
+    MODEL_NAME = 'I2C'
     def scan(self):
         for addr in range(8, 128):
             print(('%02x ' % addr) if self.adapter.i2c_probe(addr) else '-- ', end='' if (addr + 1) % 8 else '\n')
@@ -187,7 +188,7 @@ class I2CDevice(I2CDeviceCore):
             return False
         return super().set_param(key, val)
 
-    def init(self, nchannels):
+    def init(self, nchannels: int):
         """
         Initialize device setting the number of channels we are going the read.
         Should be called before first query_raw call.
@@ -207,8 +208,11 @@ class I2CDevice(I2CDeviceCore):
         dev.adapter = master.adapter
         return dev
 
-    def get_channels(self, data: Any) -> int:
-        """Get the number of channels contained in the raw data"""
+    def get_channel(self, data: Any) -> int | None:
+        """
+        Returns the index of the channel the data belongs to. If there are multiple
+        channels contained in the data, it returns -1. It there are no data, it returns None.
+        """
         if not data:
-            return 0
-        return self.channels
+            return None
+        return -1 if self.channels > 1 else 0

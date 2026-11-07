@@ -114,10 +114,14 @@ class SCPIDmm(SCPIDevice):
                 vals.append(val2)
         return vals
 
-    def get_channels(self, data):
+    def get_channel(self, data):
+        """
+        Returns the index of the channel the data belongs to. If there are multiple
+        channels contained in the data, it returns -1. It there are no data, it returns None.
+        """
         if not data:
-            return 0
-        return min(self.channels, len(data))
+            return None
+        return -1 if self.channels > 1 and len(data) > 1 else 0
 
     def get_value(self, data, channel=0):
         if not data:
@@ -172,10 +176,14 @@ class SCPIPowerSource(SCPIDevice):
             return None
         return tuple(reversed(resp.split(b',')[:2]))
 
-    def get_channels(self, data):
+    def get_channel(self, data):
+        """
+        Returns the index of the channel the data belongs to. If there are multiple
+        channels contained in the data, it returns -1. It there are no data, it returns None.
+        """
         if not data:
-            return 0
-        return min(self.channels, len(data))
+            return None
+        return -1 if self.channels > 1 and len(data) > 1 else 0
 
     def get_value(self, data, channel=0):
         if not data:

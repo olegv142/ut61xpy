@@ -383,7 +383,8 @@ def do_data(args):
     errs_max = 2 if not args.bt else 5
     errs_left = errs_max
     try:
-        dev.init(2 if alt_file else 1)
+        nchannels = 2 if alt_file else 1
+        dev.init(nchannels)
         start = ts = time.time()
         while True:
             # Query data
@@ -403,9 +404,10 @@ def do_data(args):
                 continue
             errs_left = errs_max
             t = ts - start
-            channel_count = dev.get_channels(data)
-            for chan in range(channel_count):
-                val_chan = dev.get_channel(data) if channel_count == 1 else chan
+            channel = dev.get_channel(data)
+            assert channel is not None
+            for chan_idx in range(nchannels if channel < 0 else 1):
+                val_chan = chan_idx if channel < 0 else channel
                 val = dev.get_value(data, val_chan)
                 val_good = not math.isnan(val)
                 # Output data
