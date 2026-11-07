@@ -113,6 +113,12 @@ def i2c_read(dev, address: int, length: int) -> list[int]|None:
         return None
     return ret
 
+def i2c_write_read(dev, address: int, wr_data: list[int], rd_length: int) -> list[int]|None:
+    sta, ret = i2c_tx_raw(dev, [address << 1] + wr_data, rd_length)
+    if not sta:
+        return None
+    return ret
+
 def i2c_probe(dev, address: int) -> bool:
     """CXheck the device presence at given address"""
     sta, ret = i2c_tx_raw(dev, [address << 1]) # Just check if address was acknowledged

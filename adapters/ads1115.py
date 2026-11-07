@@ -105,9 +105,7 @@ class ADS1115Device(I2CDevice):
                 if (status := self.adapter.i2c_read(self.I2C_ADDR, 2)) is None:
                     return None
                 if status[0] & (1 << 7):
-                    if not self.adapter.i2c_write(self.I2C_ADDR, [0]): # set target register address
-                        return None
-                    if not (data := self.adapter.i2c_read(self.I2C_ADDR, 2)):
+                    if not (data := self.adapter.i2c_write_read(self.I2C_ADDR, [0], 2)):
                         return None
                     return bytes(data)
                 wait -= self.IDLE_DELAY

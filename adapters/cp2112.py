@@ -113,6 +113,28 @@ def i2c_read(dev, address: int, length: int) -> list[int]|None:
         return None
     return report[3:length + 3]
 
+def i2c_write_read(dev, address: int, wr_data: list[int], length: int) -> list[int]|None:
+    """Write and read in single I2C transaction"""
+    dev.write([0x11, address << 1, 0, length, len(wr_data)] + wr_data)
+    if not i2c_wait_idle(dev):
+        log.error('error reading addr %#x', address)
+        return None
+    dev.write([0x12, length])
+    report = read_packet(dev, 0x13)
+    if report is None:
+        log.error('timeout reading addr %#x', address)
+        return None
+    if len(report) < 3 + length:
+        log.error('bad packet length reading addr %#x: expects %u, got %u',
+            address, length + 3, len(report))
+        return None
+    if length != report[2]:
+        log.error('bad data length reading addr %#x: expects %u, got %u',
+            address, length, report[2])
+        return None
+    return report[3:length + 3]
+
+
 def i2c_probe(dev, address: int):
     """Test presence of the address on the bus. Typically the zero payload write is used for that purpose.
     Unfortunately the CP2112 completely ignores NAKed address during such transaction. So we are using

@@ -104,6 +104,11 @@ def i2c_read(dev, address: int, length: int, flags: int = FL_START_STOP) -> list
         return None
     return report[2:2 + length]
 
+def i2c_write_read(dev, address: int, wr_data: list[int], rd_length: int) -> list[int]|None:
+    """Write and read in single I2C transaction"""
+    i2c_write(dev, address, wr_data, FL_START, wait = False)
+    return i2c_read(dev, address, rd_length, FL_REPEATED_START_STOP)
+
 def i2c_probe(dev, address: int) -> bool:
     """
     Test presence of the address on the bus. Typically the zero payload write is used for that purpose.

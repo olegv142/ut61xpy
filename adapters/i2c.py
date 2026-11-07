@@ -36,6 +36,10 @@ class I2CAdapter:
         """Read data bytes from I2C given target address"""
         raise NotImplementedError()
 
+    def i2c_write_read(self, addr: int, wr_data: list[int], rd_length: int) -> list[int]|None:
+        """Write and read in single I2C transaction"""
+        raise NotImplementedError()
+
 class FT260Adapter(I2CAdapter):
     """FTDI FT260 I2C adapter class"""
     DEVICE_VID = ft260.DEVICE_VID
@@ -51,6 +55,9 @@ class FT260Adapter(I2CAdapter):
 
     def i2c_read(self, addr: int, length: int) -> list[int]|None:
         return ft260.i2c_read(self.dev, addr, length)
+
+    def i2c_write_read(self, addr: int, wr_data: list[int], rd_length: int) -> list[int]|None:
+        return ft260.i2c_write_read(self.dev, addr, wr_data, rd_length)
 
 class CP2112Adapter(I2CAdapter):
     """Silicon Labs CP2112 I2C adapter class"""
@@ -68,6 +75,9 @@ class CP2112Adapter(I2CAdapter):
     def i2c_read(self, addr: int, length: int) -> list[int]|None:
         return cp2112.i2c_read(self.dev, addr, length)
 
+    def i2c_write_read(self, addr: int, wr_data: list[int], rd_length: int) -> list[int]|None:
+        return cp2112.i2c_write_read(self.dev, addr, wr_data, rd_length)
+
 class CH347TAdapter(I2CAdapter):
     """CH347T I2C adapter class"""
     DEVICE_VID = ch347t.DEVICE_VID
@@ -84,6 +94,9 @@ class CH347TAdapter(I2CAdapter):
 
     def i2c_read(self, addr: int, length: int) -> list[int]|None:
         return ch347t.i2c_read(self.dev, addr, length)
+
+    def i2c_write_read(self, addr: int, wr_data: list[int], rd_length: int) -> list[int]|None:
+        return ch347t.i2c_write_read(self.dev, addr, wr_data, rd_length)
 
 class I2CDevice(Device, HIDMixin):
     """Base class for devices using I2C communication bus"""
