@@ -28,6 +28,10 @@ class I2CAdapter:
         """Initialize I2C bus"""
         raise NotImplementedError()
 
+    def i2c_probe(self, addr: int) -> bool:
+        """Check the device presence at given address"""
+        raise NotImplementedError()
+
     def i2c_write(self, addr: int, data: list[int]) -> bool:
         """Write data bytes to I2C given target address"""
         raise NotImplementedError()
@@ -50,6 +54,9 @@ class FT260Adapter(I2CAdapter):
         self.dev = dev
         ft260.i2c_init(self.dev)
 
+    def i2c_probe(self, addr: int) -> bool:
+        return ft260.i2c_probe(self.dev, addr)
+
     def i2c_write(self, addr: int, data: list[int]) -> bool:
         return ft260.i2c_write(self.dev, addr, data)
 
@@ -68,6 +75,9 @@ class CP2112Adapter(I2CAdapter):
     def __init__(self, dev):
         self.dev = dev
         cp2112.i2c_init(self.dev)
+
+    def i2c_probe(self, addr: int) -> bool:
+        return cp2112.i2c_probe(self.dev, addr)
 
     def i2c_write(self, addr: int, data: list[int]) -> bool:
         return cp2112.i2c_write(self.dev, addr, data)
@@ -89,6 +99,9 @@ class CH347TAdapter(I2CAdapter):
         self.dev = dev
         ch347t.i2c_init(self.dev)
 
+    def i2c_probe(self, addr: int) -> bool:
+        return ch347t.i2c_probe(self.dev, addr)
+
     def i2c_write(self, addr: int, data: list[int]) -> bool:
         return ch347t.i2c_write(self.dev, addr, data)
 
@@ -98,17 +111,15 @@ class CH347TAdapter(I2CAdapter):
     def i2c_write_read(self, addr: int, wr_data: list[int], rd_length: int) -> list[int]|None:
         return ch347t.i2c_write_read(self.dev, addr, wr_data, rd_length)
 
-class I2CDevice(Device, HIDMixin):
+class I2CDeviceCore(Device, HIDMixin):
     """Base class for devices using I2C communication bus"""
     I2C_ADAPTER_TYPE = FT260Adapter # default i2c adapter
     DEVICE_VID = I2C_ADAPTER_TYPE.DEVICE_VID
     DEVICE_PID = I2C_ADAPTER_TYPE.DEVICE_PID
     DEVICE_IFN = I2C_ADAPTER_TYPE.DEVICE_IFN
-    I2C_ADDR = None # must be redefined in subclasses
 
     def __init__(self, *args):
         super().__init__(*args)
-        self.channels = None
         self.adapter = None
 
     @classmethod
@@ -135,6 +146,29 @@ class I2CDevice(Device, HIDMixin):
             return False
         return super().set_model_param(key, val)
 
+    def init(self, nchannels: int = 0):
+        if self.adapter is None:
+            self.adapter = self.I2C_ADAPTER_TYPE(self.dev)
+
+    @classmethod
+    def model_info(cls) -> str:
+        """The implementation may redefine this method to provide extended information"""
+        return cls.MODEL_NAME + '-' + cls.I2C_ADAPTER_TYPE.NAME
+
+class I2CBusScanner(I2CDeviceCore):
+    """The sole purpose of this device class is to scan I2C bus addresses"""
+    def scan(self):
+        for addr in range(8, 128):
+            print(('%02x ' % addr) if self.adapter.i2c_probe(addr) else '-- ', end='' if (addr + 1) % 8 else '\n')
+
+class I2CDevice(I2CDeviceCore):
+    """Base class for devices using I2C communication bus"""
+    I2C_ADDR = None # must be redefined in subclasses
+
+    def __init__(self, *args):
+        super().__init__(*args)
+        self.channels = None
+
     def set_i2c_addr(self, addr: int):
         """Set target device address on I2C bus"""
         self.I2C_ADDR = addr
@@ -153,19 +187,13 @@ class I2CDevice(Device, HIDMixin):
             return False
         return super().set_param(key, val)
 
-    @classmethod
-    def model_info(cls) -> str:
-        """The implementation may redefine this method to provide extended information"""
-        return cls.MODEL_NAME + '-' + cls.I2C_ADAPTER_TYPE.NAME
-
     def init(self, nchannels):
         """
         Initialize device setting the number of channels we are going the read.
         Should be called before first query_raw call.
         """
+        super().init(nchannels)
         self.channels = nchannels
-        if self.adapter is None:
-            self.adapter = self.I2C_ADAPTER_TYPE(self.dev)
 
     @classmethod
     def attach_to_i2c_bus(cls, master: 'I2CDevice') -> 'I2CDevice':

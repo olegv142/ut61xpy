@@ -120,7 +120,7 @@ def i2c_write_read(dev, address: int, wr_data: list[int], rd_length: int) -> lis
     return ret
 
 def i2c_probe(dev, address: int) -> bool:
-    """CXheck the device presence at given address"""
+    """Check the device presence at given address"""
     sta, ret = i2c_tx_raw(dev, [address << 1]) # Just check if address was acknowledged
     return sta
 

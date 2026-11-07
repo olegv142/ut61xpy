@@ -18,6 +18,7 @@ from adapters.fnirsi import FNB48pUsb, FNB48pBt, FNB58Usb, FNB58Bt, FNAC28, FNBC
 from adapters.ina import INA226Device, INA228Device
 from adapters.mcp3421 import MCP3421Device
 from adapters.ads1115 import ADS1115Device
+from adapters.i2c import I2CBusScanner
 from data_stat import StatCollector, histogram
 from version import version_str
 from datetime import datetime
@@ -291,6 +292,7 @@ def do_once(args):
     if dev is None:
         return -1
     try:
+        dev.init(1)
         data = dev.query_raw()
         if not data:
             log.error('\n%s returns no data', dev)
@@ -571,6 +573,23 @@ def do_hist(args):
         plot_data([H], [Cnt], [get_file_base_name(args.input_file)], [info],
             yticks=[0], no_stat=True, title_suffix=' [histogram]')
 
+def do_i2c_scan(args):
+    T, inst_params = apply_model_params(I2CBusScanner, args)
+    if T is None:
+        return -1
+    if inst_params:
+        log.error('unrecognized parameters')
+        return -1
+    dev = T.open()
+    if dev is None:
+        return -1
+    try:
+        dev.init()
+        dev.scan()
+        return 0
+    finally:
+        dev.close()
+
 def main(argv=None):
     logging.basicConfig(format='%(message)s', level=logging.INFO)
     main_impl(argv)
@@ -698,6 +717,11 @@ def main_impl(argv=None):
             help='the number of bins')
     hist_parser.add_argument('-d', '--delimiter', type=str, default='', metavar='SYMBOL',
             help='data delimiter on output (optional, space by default)')
+
+    i2c_scan_parser = subparsers.add_parser('i2c-scan', prog=subparser_prog,
+            help='scan I2C bus for connected devices'
+        )
+    i2c_scan_parser.set_defaults(func=do_i2c_scan)
 
     args = parser.parse_args(argv)
 
